@@ -531,6 +531,13 @@ function lib.new(config)
                 local valueLabel = row.value
 
                 valueLabel.AutomaticSize = Enum.AutomaticSize.X
+                local valPad = valueLabel:FindFirstChildOfClass("UIPadding")
+                if not valPad then
+                    valPad = Instance.new("UIPadding")
+                    valPad.Parent = valueLabel
+                end
+                valPad.PaddingLeft = UDim.new(0, 6)
+                valPad.PaddingRight = UDim.new(0, 6)
 
                 local sliderDragging = false
 
