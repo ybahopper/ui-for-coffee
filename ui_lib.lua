@@ -530,6 +530,8 @@ function lib.new(config)
                 local fill = track.fill
                 local valueLabel = row.value
 
+                valueLabel.AutomaticSize = Enum.AutomaticSize.X
+
                 local sliderDragging = false
 
                 local function snapToStep(val)
