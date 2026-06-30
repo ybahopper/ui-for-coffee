@@ -44,7 +44,7 @@ local orig_card = left_col_template.card
 local section_header_template = orig_card:FindFirstChild("section_header"):Clone()
 do
     local shStroke = section_header_template:FindFirstChildOfClass("UIStroke")
-    if shStroke then shStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border end
+    if shStroke then shStroke.BorderStrokePosition = Enum.BorderStrokePosition.Center end
 end
 local toggle_row_template = orig_card:FindFirstChild("toggle_row_off"):Clone()
 local slider_row_template = orig_card:FindFirstChild("slider_row"):Clone()
@@ -106,7 +106,7 @@ for _, child in ipairs(card_template:GetChildren()) do
     if child:IsA("GuiObject") then child:Destroy() end
 end
 local cardTemplateStroke = card_template:FindFirstChildOfClass("UIStroke")
-if cardTemplateStroke then cardTemplateStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border end
+if cardTemplateStroke then cardTemplateStroke.BorderStrokePosition = Enum.BorderStrokePosition.Center end
 
 local TweenService = cloneref(game:GetService("TweenService"))
 local UserInputService = cloneref(game:GetService("UserInputService"))
@@ -158,11 +158,10 @@ function lib.new(config)
     if modal_frame then modal_frame.Visible = false end
     if modal_backdrop then modal_backdrop.Visible = false end
     for _, child in ipairs(notifications_container:GetChildren()) do
-        if child:IsA("Frame") or child:IsA("UIListLayout") then child:Destroy() end
+        if child:IsA("Frame") then child:Destroy() end
     end
-    notifications_container.Visible = true
-    notifications_container.ClipsDescendants = false
-    notifications_container.ZIndex = 10
+    notifications_container.AnchorPoint = Vector2.new(1, 0)
+    notifications_container.Position = UDim2.new(1, -8, 0, 8)
     title_bar.brand_name.Text = config.name or "UI Library"
 
     if config.logo then
@@ -452,18 +451,11 @@ function lib.new(config)
             local column = (side == "right") and right or left
 
             local card = card_template:Clone()
-            for _, st in ipairs(card:GetDescendants()) do
-                if st:IsA("UIStroke") then st.ApplyStrokeMode = Enum.ApplyStrokeMode.Border end
-            end
-            local cStroke = card:FindFirstChildOfClass("UIStroke")
-            if cStroke then cStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border end
 
             if cardConfig.name then
                 local header = section_header_template:Clone()
                 header.title.Text = cardConfig.name
                 header.Visible = true
-                local hStroke = header:FindFirstChildOfClass("UIStroke")
-                if hStroke then hStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border end
                 header.Parent = card
             end
 
@@ -1823,10 +1815,6 @@ function lib.new(config)
 
         local notif = notif_template:Clone()
         notif.Visible = true
-        notif.ZIndex = 10
-        for _, desc in ipairs(notif:GetDescendants()) do
-            if desc:IsA("GuiObject") then desc.ZIndex = 10 end
-        end
 
         local dot = notif:FindFirstChild("dot")
         if dot then dot.BackgroundColor3 = NOTIF_COLORS[notifType] or NOTIF_COLORS.info end
@@ -1840,28 +1828,18 @@ function lib.new(config)
         notifCount = notifCount + 1
         updateNotifBadge()
 
-        -- Count existing notifications for stacking
-        local yOffset = 0
-        for _, child in ipairs(AnimLoggerUI:GetChildren()) do
-            if child.Name == "_notif" and child:IsA("Frame") and child.Visible then
-                yOffset = yOffset + child.AbsoluteSize.Y + 8
-            end
-        end
-
-        notif.Name = "_notif"
-        notif.AnchorPoint = Vector2.new(1, 0)
-        notif.Position = UDim2.new(1, 20, 0, 20 + yOffset)
-        notif.Parent = AnimLoggerUI
+        notif.Position = UDim2.new(1, 20, 0, 0)
+        notif.Parent = notifications_container
 
         TweenService:Create(notif, TweenInfo.new(0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
-            Position = UDim2.new(1, -20, 0, 20 + yOffset),
+            Position = UDim2.new(0, 0, 0, 0),
         }):Play()
 
         task.delay(duration, function()
             notifCount = math.max(0, notifCount - 1)
             updateNotifBadge()
             local fadeOut = TweenService:Create(notif, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.In), {
-                Position = UDim2.new(1, 20, 0, 20 + yOffset),
+                Position = UDim2.new(1, 20, 0, 0),
             })
             fadeOut:Play()
             fadeOut.Completed:Connect(function()
