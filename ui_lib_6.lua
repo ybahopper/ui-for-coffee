@@ -42,10 +42,6 @@ local right_col_template = content.right_column:Clone()
 
 local orig_card = left_col_template.card
 local section_header_template = orig_card:FindFirstChild("section_header"):Clone()
-do
-    local shStroke = section_header_template:FindFirstChildOfClass("UIStroke")
-    if shStroke then shStroke.BorderStrokePosition = Enum.BorderStrokePosition.Center end
-end
 local toggle_row_template = orig_card:FindFirstChild("toggle_row_off"):Clone()
 local slider_row_template = orig_card:FindFirstChild("slider_row"):Clone()
 local dropdown_row_template = orig_card:FindFirstChild("dropdown_row"):Clone()
@@ -105,8 +101,19 @@ local card_template = orig_card:Clone()
 for _, child in ipairs(card_template:GetChildren()) do
     if child:IsA("GuiObject") then child:Destroy() end
 end
-local cardTemplateStroke = card_template:FindFirstChildOfClass("UIStroke")
-if cardTemplateStroke then cardTemplateStroke.BorderStrokePosition = Enum.BorderStrokePosition.Center end
+do
+    local oldStroke = card_template:FindFirstChildOfClass("UIStroke")
+    local strokeColor = oldStroke and oldStroke.Color or Color3.fromRGB(60, 45, 32)
+    local strokeTransparency = oldStroke and oldStroke.Transparency or 0.5
+    local strokeThickness = oldStroke and oldStroke.Thickness or 1
+    if oldStroke then oldStroke:Destroy() end
+    local newStroke = Instance.new("UIStroke")
+    newStroke.Color = strokeColor
+    newStroke.Transparency = strokeTransparency
+    newStroke.Thickness = strokeThickness
+    newStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    newStroke.Parent = card_template
+end
 
 local TweenService = cloneref(game:GetService("TweenService"))
 local UserInputService = cloneref(game:GetService("UserInputService"))
