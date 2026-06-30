@@ -23,7 +23,7 @@ _G._uiLibConnections = {}
 
 local RBXMXParser = load("RBXMXParser.lua")
 local _temp = Instance.new("Folder")
-local AnimLoggerUI = RBXMXParser.Deserialize(fetch("uilib.rbxmx"), _temp)[1]
+local AnimLoggerUI = RBXMXParser.Deserialize(fetch("uilib_1.rbxmx"), _temp)[1]
 
 local main_frame = AnimLoggerUI.main_frame
 local content = main_frame.content
@@ -57,6 +57,46 @@ local keybind_row_template = orig_right_card:FindFirstChild("keybind_row"):Clone
 local info_row_template = orig_right_card:FindFirstChild("info_row"):Clone()
 local input_row_template = orig_right_card:FindFirstChild("input_row"):Clone()
 
+local colorpicker_row_template = orig_card:FindFirstChild("colorpicker_row"):Clone()
+local colorpicker_picker_template = orig_card:FindFirstChild("colorpicker_row_open"):FindFirstChild("picker"):Clone()
+
+local accordion_row_template = orig_card:FindFirstChild("accordion_row_open"):Clone()
+do
+    local accTmpContent = accordion_row_template:FindFirstChild("content")
+    if accTmpContent then accTmpContent:Destroy() end
+end
+
+local progress_row_template = orig_right_card:FindFirstChild("progress_row"):Clone()
+local rating_row_template = orig_right_card:FindFirstChild("rating_row"):Clone()
+
+local data_table_row_template = orig_right_card:FindFirstChild("data_table_row"):Clone()
+local data_table_cell_template = data_table_row_template:FindFirstChild("row_template"):Clone()
+for _, child in ipairs(data_table_row_template:GetChildren()) do
+    if child:IsA("Frame") and child.Name:match("^row_") then child:Destroy() end
+end
+
+local stat_card_row_template = orig_right_card:FindFirstChild("stat_card_row"):Clone()
+local stat_entry_template = stat_card_row_template:FindFirstChild("stat_template"):Clone()
+for _, child in ipairs(stat_card_row_template:GetChildren()) do
+    if child:IsA("Frame") and (child.Name:match("^stat_%d") or child.Name == "divider") then child:Destroy() end
+end
+
+local timeline_row_template = orig_right_card:FindFirstChild("timeline_row"):Clone()
+local timeline_event_template
+for _, child in ipairs(timeline_row_template:GetChildren()) do
+    if child.Name == "event_1" then timeline_event_template = child:Clone() end
+    if child:IsA("Frame") and child.Name:match("^event_") then child:Destroy() end
+end
+
+local notif_template = AnimLoggerUI:FindFirstChild("notifications"):FindFirstChild("notif_success"):Clone()
+
+local login_panel_ref = AnimLoggerUI:FindFirstChild("login_panel")
+local minimized_bar_ref = AnimLoggerUI:FindFirstChild("minimized_bar")
+local notifications_container = AnimLoggerUI:FindFirstChild("notifications")
+local modal_frame = main_frame:FindFirstChild("modal")
+local modal_backdrop = main_frame:FindFirstChild("modal_backdrop")
+local tooltip_frame = main_frame:FindFirstChild("tooltip")
+
 local card_template = orig_card:Clone()
 for _, child in ipairs(card_template:GetChildren()) do
     if child:IsA("GuiObject") then child:Destroy() end
@@ -82,6 +122,16 @@ local TOGGLE_OFF = {
     knobTransparency = 0.45,
     strokeEnabled = true,
 }
+local NOTIF_COLORS = {
+    success = Color3.fromRGB(160, 180, 120),
+    error = Color3.fromRGB(200, 110, 90),
+    info = Color3.fromRGB(194, 137, 92),
+}
+local STAR_ON = Color3.fromRGB(194, 137, 92)
+local STAR_OFF = Color3.fromRGB(60, 45, 32)
+local ACCENT = Color3.fromRGB(194, 137, 92)
+local DIM_TEXT = Color3.fromRGB(155, 143, 128)
+local TEXT_COLOR = Color3.fromRGB(221, 211, 198)
 
 for _, child in ipairs(bottom.nav_pill:GetChildren()) do
     if child.Name == "nav_tab" then child:Destroy() end
@@ -97,6 +147,13 @@ function lib.new(config)
 
     AnimLoggerUI.Parent = uiParent
     main_frame.Visible = false
+    if minimized_bar_ref then minimized_bar_ref.Visible = false end
+    if login_panel_ref then login_panel_ref.Visible = false end
+    if modal_frame then modal_frame.Visible = false end
+    if modal_backdrop then modal_backdrop.Visible = false end
+    for _, notif in ipairs(notifications_container:GetChildren()) do
+        if notif:IsA("Frame") then notif.Visible = false end
+    end
     title_bar.brand_name.Text = config.name or "UI Library"
 
     if config.logo then
@@ -358,12 +415,6 @@ function lib.new(config)
         else
             btn.icon.Visible = false
         end
-        btn.BackgroundTransparency = 1
-        btn.label.TextColor3 = inactiveColor
-        btn.icon.ImageColor3 = inactiveIconColor
-        local initStroke = btn:FindFirstChildOfClass("UIStroke")
-        if initStroke then initStroke.Enabled = false end
-        btn.Visible = true
         btn.Parent = bottom.nav_pill
 
         local left = left_col_template:Clone()
@@ -410,11 +461,6 @@ function lib.new(config)
 
             card.Visible = true
             card.Parent = column
-
-            local cardStroke = card:FindFirstChildOfClass("UIStroke")
-            if cardStroke then
-                cardStroke.BorderStrokePosition = Enum.BorderStrokePosition.Inner
-            end
 
             table.insert(tab._cards, card)
 
@@ -529,15 +575,6 @@ function lib.new(config)
                 local track = row.track
                 local fill = track.fill
                 local valueLabel = row.value
-
-                valueLabel.AutomaticSize = Enum.AutomaticSize.X
-                local valPad = valueLabel:FindFirstChildOfClass("UIPadding")
-                if not valPad then
-                    valPad = Instance.new("UIPadding")
-                    valPad.Parent = valueLabel
-                end
-                valPad.PaddingLeft = UDim.new(0, 6)
-                valPad.PaddingRight = UDim.new(0, 6)
 
                 local sliderDragging = false
 
@@ -858,15 +895,6 @@ function lib.new(config)
                 row.LayoutOrder = elementCount
                 row.Visible = true
 
-                local sep = Instance.new("Frame")
-                sep.Name = "sep"
-                sep.Size = UDim2.new(1, 0, 0, 1)
-                sep.Position = UDim2.new(0, 0, 1, -1)
-                sep.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                sep.BackgroundTransparency = 0.95
-                sep.BorderSizePixel = 0
-                sep.Parent = row
-
                 row.Parent = card
                 updateSeparators()
 
@@ -908,8 +936,6 @@ function lib.new(config)
                 local strokeWhite = Color3.fromRGB(255, 255, 255)
                 local btnStroke = btn:FindFirstChildOfClass("UIStroke")
                 local btnPadding = btn:FindFirstChildOfClass("UIPadding")
-
-                btn.AutomaticSize = Enum.AutomaticSize.None
 
                 local function measureBtn(text)
                     local params = Instance.new("GetTextBoundsParams")
@@ -1057,6 +1083,677 @@ function lib.new(config)
                 }
             end
 
+            function cardObj:addColorPicker(cpConfig)
+                cpConfig = cpConfig or {}
+                local color = cpConfig.default or Color3.fromRGB(255, 85, 85)
+
+                local row = colorpicker_row_template:Clone()
+                row.label.Text = cpConfig.name or "Color Picker"
+                elementCount = elementCount + 1
+                row.LayoutOrder = elementCount
+                row.Visible = true
+
+                local swatch = row.swatch
+                swatch.BackgroundColor3 = color
+
+                local picker = colorpicker_picker_template:Clone()
+                picker.Visible = false
+                picker.Parent = row
+
+                local svField = picker.sv_field
+                local hueBar = picker.hue_bar
+                local hexInput = picker.hex_row.input
+                local svCursor = svField.cursor
+                local hueCursor = hueBar.cursor
+
+                local h, s, v = Color3.toHSV(color)
+
+                local function hsvToColor(hh, ss, vv)
+                    return Color3.fromHSV(hh, ss, vv)
+                end
+
+                local function updateVisual()
+                    color = hsvToColor(h, s, v)
+                    swatch.BackgroundColor3 = color
+                    svField.BackgroundColor3 = Color3.fromHSV(h, 1, 1)
+                    svCursor.Position = UDim2.new(s, 0, 1 - v, 0)
+                    hueCursor.Position = UDim2.new(0.5, 0, h, 0)
+                    hexInput.Text = "#" .. color:ToHex()
+                    if cpConfig.callback then cpConfig.callback(color) end
+                end
+
+                local svDragging, hueDragging = false, false
+
+                local function handleSV(input)
+                    local ax, ay = svField.AbsolutePosition.X, svField.AbsolutePosition.Y
+                    local aw, ah = svField.AbsoluteSize.X, svField.AbsoluteSize.Y
+                    s = math.clamp((input.Position.X - ax) / aw, 0, 1)
+                    v = math.clamp(1 - (input.Position.Y - ay) / ah, 0, 1)
+                    updateVisual()
+                end
+
+                local function handleHue(input)
+                    local ay = hueBar.AbsolutePosition.Y
+                    local ah = hueBar.AbsoluteSize.Y
+                    h = math.clamp((input.Position.Y - ay) / ah, 0, 1)
+                    updateVisual()
+                end
+
+                local svBtn = Instance.new("TextButton")
+                svBtn.Text = ""
+                svBtn.BackgroundTransparency = 1
+                svBtn.Size = UDim2.new(1, 0, 1, 0)
+                svBtn.ZIndex = 10
+                svBtn.Parent = svField
+
+                svBtn.MouseButton1Down:Connect(function() svDragging = true end)
+
+                local hueBtn = Instance.new("TextButton")
+                hueBtn.Text = ""
+                hueBtn.BackgroundTransparency = 1
+                hueBtn.Size = UDim2.new(1, 0, 1, 0)
+                hueBtn.ZIndex = 10
+                hueBtn.Parent = hueBar
+
+                hueBtn.MouseButton1Down:Connect(function() hueDragging = true end)
+
+                local cpMoveConn = UserInputService.InputChanged:Connect(newcclosure(function(input)
+                    if input.UserInputType ~= Enum.UserInputType.MouseMovement then return end
+                    if svDragging then handleSV(input) end
+                    if hueDragging then handleHue(input) end
+                end))
+                local cpEndConn = UserInputService.InputEnded:Connect(newcclosure(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        svDragging = false
+                        hueDragging = false
+                    end
+                end))
+                table.insert(_G._uiLibConnections, cpMoveConn)
+                table.insert(_G._uiLibConnections, cpEndConn)
+
+                svBtn.MouseButton1Click:Connect(function()
+                    local mouse = Players.LocalPlayer:GetMouse()
+                    local fakeInput = { Position = Vector3.new(mouse.X, mouse.Y, 0) }
+                    handleSV(fakeInput)
+                end)
+                hueBtn.MouseButton1Click:Connect(function()
+                    local mouse = Players.LocalPlayer:GetMouse()
+                    local fakeInput = { Position = Vector3.new(mouse.X, mouse.Y, 0) }
+                    handleHue(fakeInput)
+                end)
+
+                hexInput.FocusLost:Connect(function(enter)
+                    if enter then
+                        local hex = hexInput.Text:gsub("#", "")
+                        local ok, c = pcall(function() return Color3.fromHex("#" .. hex) end)
+                        if ok then
+                            h, s, v = Color3.toHSV(c)
+                            updateVisual()
+                        end
+                    end
+                end)
+
+                local pickerOpen = false
+                local swatchStroke = swatch:FindFirstChildOfClass("UIStroke")
+
+                swatch.MouseButton1Click:Connect(function()
+                    pickerOpen = not pickerOpen
+                    if pickerOpen then
+                        picker.Visible = true
+                        updateVisual()
+                        if swatchStroke then
+                            TweenService:Create(swatchStroke, TWEEN_INFO, { Color = ACCENT, Transparency = 0 }):Play()
+                        end
+                    else
+                        picker.Visible = false
+                        if swatchStroke then
+                            TweenService:Create(swatchStroke, TWEEN_INFO, { Color = Color3.fromRGB(255,255,255), Transparency = 0.88 }):Play()
+                        end
+                    end
+                end)
+
+                row.Parent = card
+                updateSeparators()
+                updateVisual()
+
+                return {
+                    set = function(_, val)
+                        h, s, v = Color3.toHSV(val)
+                        updateVisual()
+                    end,
+                    get = function()
+                        return color
+                    end,
+                }
+            end
+
+            function cardObj:addMultiSelect(msConfig)
+                msConfig = msConfig or {}
+                local options = msConfig.options or {}
+                local selected = {}
+                if msConfig.default then
+                    for _, v in ipairs(msConfig.default) do selected[v] = true end
+                end
+
+                local row = dropdown_row_template:Clone()
+                row.label.Text = msConfig.name or "Multi Select"
+                elementCount = elementCount + 1
+                row.LayoutOrder = elementCount
+                row.Visible = true
+
+                local btn = row.button
+                local chevron = btn.chevron
+                local valueLabel = btn.value
+
+                local function countSelected()
+                    local n = 0
+                    for _ in pairs(selected) do n = n + 1 end
+                    return n
+                end
+
+                local function updateValueText()
+                    local n = countSelected()
+                    valueLabel.Text = n > 0 and (n .. " selected") or "None"
+                end
+                updateValueText()
+
+                local menu = dropdown_menu_template:Clone()
+                menu.Visible = false
+                menu.AutomaticSize = Enum.AutomaticSize.None
+                menu.Size = UDim2.new(0, 134, 0, 0)
+                menu.ClipsDescendants = true
+                menu.Parent = row
+
+                local optButtons = {}
+                local optHeight = 26
+                local padding = 8
+                local fullHeight = #options * optHeight + padding
+
+                local function updateOptStyles()
+                    for _, ob in ipairs(optButtons) do
+                        local isSel = selected[ob.opt]
+                        ob.btn.TextLabel.Text = (isSel and "✓ " or "   ") .. ob.opt
+                        TweenService:Create(ob.btn, TWEEN_INFO, {
+                            BackgroundTransparency = isSel and 0.7 or 1
+                        }):Play()
+                    end
+                end
+
+                for i, opt in ipairs(options) do
+                    local optBtn = dropdown_opt_template:Clone()
+                    optBtn.LayoutOrder = i
+                    optBtn.TextLabel.Text = (selected[opt] and "✓ " or "   ") .. opt
+                    optBtn.Visible = true
+                    optBtn.BackgroundTransparency = selected[opt] and 0.7 or 1
+                    optBtn.TextLabel.TextTransparency = 1
+                    optBtn.Parent = menu
+
+                    optButtons[#optButtons + 1] = { btn = optBtn, opt = opt, index = i }
+
+                    optBtn.MouseEnter:Connect(function()
+                        TweenService:Create(optBtn, TWEEN_INFO, { BackgroundTransparency = 0.8 }):Play()
+                    end)
+                    optBtn.MouseLeave:Connect(function()
+                        local target = selected[opt] and 0.7 or 1
+                        TweenService:Create(optBtn, TWEEN_INFO, { BackgroundTransparency = target }):Play()
+                    end)
+                    optBtn.MouseButton1Click:Connect(function()
+                        selected[opt] = not selected[opt] or nil
+                        updateOptStyles()
+                        updateValueText()
+                        if msConfig.callback then
+                            local list = {}
+                            for _, o in ipairs(options) do
+                                if selected[o] then table.insert(list, o) end
+                            end
+                            msConfig.callback(list)
+                        end
+                    end)
+                end
+
+                local isOpen = false
+                local OPEN_TWEEN = TweenInfo.new(0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+                local btnStroke = btn:FindFirstChildOfClass("UIStroke")
+                local defaultChevronColor = chevron.TextColor3
+
+                local function closeMenu()
+                    isOpen = false
+                    local menuStroke = menu:FindFirstChildOfClass("UIStroke")
+                    TweenService:Create(menu, TweenInfo.new(0.2, Enum.EasingStyle.Quint), { BackgroundTransparency = 1 }):Play()
+                    if menuStroke then TweenService:Create(menuStroke, TweenInfo.new(0.2, Enum.EasingStyle.Quint), { Transparency = 1 }):Play() end
+                    local tween = TweenService:Create(menu, TweenInfo.new(0.25, Enum.EasingStyle.Quint), { Size = UDim2.new(0, 134, 0, 0) })
+                    tween:Play()
+                    tween.Completed:Connect(function() if not isOpen then menu.Visible = false end end)
+                    TweenService:Create(chevron, TweenInfo.new(0.3, Enum.EasingStyle.Quint), { Rotation = 90, TextColor3 = defaultChevronColor }):Play()
+                    if btnStroke then TweenService:Create(btnStroke, TweenInfo.new(0.25, Enum.EasingStyle.Quint), { Color = Color3.fromRGB(255,255,255), Transparency = 0.88 }):Play() end
+                    for _, ob in ipairs(optButtons) do
+                        TweenService:Create(ob.btn.TextLabel, TweenInfo.new(0.15, Enum.EasingStyle.Quint), { TextTransparency = 1 }):Play()
+                    end
+                end
+
+                btn.MouseButton1Click:Connect(function()
+                    isOpen = not isOpen
+                    if isOpen then
+                        menu.Visible = true
+                        menu.BackgroundTransparency = 0
+                        local menuStroke = menu:FindFirstChildOfClass("UIStroke")
+                        if menuStroke then menuStroke.Transparency = 0.88 end
+                        TweenService:Create(menu, OPEN_TWEEN, { Size = UDim2.new(0, 134, 0, fullHeight) }):Play()
+                        TweenService:Create(chevron, TweenInfo.new(0.3, Enum.EasingStyle.Quint), { Rotation = 0, TextColor3 = ACCENT }):Play()
+                        if btnStroke then TweenService:Create(btnStroke, TweenInfo.new(0.25, Enum.EasingStyle.Quint), { Color = ACCENT, Transparency = 0.3 }):Play() end
+                        for _, ob in ipairs(optButtons) do
+                            local d = (ob.index - 1) * 0.03
+                            ob.btn.TextLabel.TextTransparency = 1
+                            TweenService:Create(ob.btn.TextLabel, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out, 0, false, d), { TextTransparency = 0 }):Play()
+                        end
+                    else
+                        closeMenu()
+                    end
+                end)
+
+                row.Parent = card
+                updateSeparators()
+
+                return {
+                    set = function(_, vals)
+                        selected = {}
+                        for _, v in ipairs(vals) do selected[v] = true end
+                        updateOptStyles()
+                        updateValueText()
+                    end,
+                    get = function()
+                        local list = {}
+                        for _, o in ipairs(options) do
+                            if selected[o] then table.insert(list, o) end
+                        end
+                        return list
+                    end,
+                }
+            end
+
+            function cardObj:addAccordion(accConfig)
+                accConfig = accConfig or {}
+                local items = accConfig.items or {}
+
+                local row = accordion_row_template:Clone()
+                local header = row:FindFirstChild("header")
+                header:FindFirstChild("label").Text = accConfig.name or "Section"
+                elementCount = elementCount + 1
+                row.LayoutOrder = elementCount
+                row.Visible = true
+                row.AutomaticSize = Enum.AutomaticSize.Y
+
+                local contentFrame = Instance.new("Frame")
+                contentFrame.Name = "content"
+                contentFrame.Size = UDim2.new(1, -8, 0, #items * 20 + 8)
+                contentFrame.Position = UDim2.new(0, 8, 0, 0)
+                contentFrame.BackgroundColor3 = Color3.fromRGB(26, 19, 14)
+                contentFrame.BackgroundTransparency = 0
+                contentFrame.Visible = false
+                contentFrame.ClipsDescendants = true
+                contentFrame.AutomaticSize = Enum.AutomaticSize.None
+                contentFrame.LayoutOrder = 2
+                contentFrame.Parent = row
+
+                local contentCorner = Instance.new("UICorner")
+                contentCorner.CornerRadius = UDim.new(0, 4)
+                contentCorner.Parent = contentFrame
+
+                local accentBar = Instance.new("Frame")
+                accentBar.Size = UDim2.new(0, 2, 1, 0)
+                accentBar.BackgroundColor3 = ACCENT
+                accentBar.BorderSizePixel = 0
+                accentBar.Parent = contentFrame
+
+                local itemLabels, itemValues = {}, {}
+                for i, item in ipairs(items) do
+                    local lbl = Instance.new("TextLabel")
+                    lbl.Size = UDim2.new(0.6, -10, 0, 14)
+                    lbl.Position = UDim2.new(0, 12, 0, (i - 1) * 20 + 5)
+                    lbl.BackgroundTransparency = 1
+                    lbl.TextColor3 = DIM_TEXT
+                    lbl.FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Regular)
+                    lbl.TextSize = 11
+                    lbl.TextXAlignment = Enum.TextXAlignment.Left
+                    lbl.Text = item.label or ""
+                    lbl.Parent = contentFrame
+                    itemLabels[i] = lbl
+
+                    local val = Instance.new("TextLabel")
+                    val.Size = UDim2.new(0, 40, 0, 14)
+                    val.Position = UDim2.new(1, -48, 0, (i - 1) * 20 + 5)
+                    val.BackgroundTransparency = 1
+                    val.TextColor3 = TEXT_COLOR
+                    val.FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Medium)
+                    val.TextSize = 11
+                    val.TextXAlignment = Enum.TextXAlignment.Right
+                    val.Text = item.value or ""
+                    val.Parent = contentFrame
+                    itemValues[i] = val
+                end
+
+                local isOpen = false
+                local chevron = header:FindFirstChild("chevron")
+
+                header.MouseButton1Click:Connect(function()
+                    isOpen = not isOpen
+                    TweenService:Create(chevron, TweenInfo.new(0.2, Enum.EasingStyle.Quint), {
+                        Rotation = isOpen and 90 or 0,
+                        TextColor3 = isOpen and ACCENT or DIM_TEXT,
+                    }):Play()
+                    if isOpen then
+                        contentFrame.Visible = true
+                    else
+                        contentFrame.Visible = false
+                    end
+                end)
+
+                row.Parent = card
+                updateSeparators()
+
+                return {
+                    set = function(_, label, value)
+                        for i, lbl in ipairs(itemLabels) do
+                            if lbl.Text == label then itemValues[i].Text = tostring(value); break end
+                        end
+                    end,
+                    get = function(_, label)
+                        for i, lbl in ipairs(itemLabels) do
+                            if lbl.Text == label then return itemValues[i].Text end
+                        end
+                    end,
+                }
+            end
+
+            function cardObj:addProgressBar(pbConfig)
+                pbConfig = pbConfig or {}
+                local value = pbConfig.default or 0
+
+                local row = progress_row_template:Clone()
+                row.label.Text = pbConfig.name or "Progress"
+                elementCount = elementCount + 1
+                row.LayoutOrder = elementCount
+                row.Visible = true
+
+                local track = row.track
+                local fill = track.fill
+                local valueLabel = row.value
+
+                local function updateVisual(val)
+                    local pct = math.clamp(val / 100, 0, 1)
+                    TweenService:Create(fill, TWEEN_INFO, { Size = UDim2.new(pct, 0, 1, 0) }):Play()
+                    valueLabel.Text = math.floor(val) .. "%"
+                end
+
+                updateVisual(value)
+                row.Parent = card
+                updateSeparators()
+
+                return {
+                    set = function(_, val)
+                        value = math.clamp(val, 0, 100)
+                        updateVisual(value)
+                        if pbConfig.callback then pbConfig.callback(value) end
+                    end,
+                    get = function()
+                        return value
+                    end,
+                }
+            end
+
+            function cardObj:addRating(ratingConfig)
+                ratingConfig = ratingConfig or {}
+                local value = ratingConfig.default or 0
+                local maxStars = 5
+
+                local row = rating_row_template:Clone()
+                row.label.Text = ratingConfig.name or "Rating"
+                elementCount = elementCount + 1
+                row.LayoutOrder = elementCount
+                row.Visible = true
+
+                local stars = row.stars
+                local starBtns = {}
+                for i = 1, maxStars do
+                    local star = stars:FindFirstChild("star_" .. i)
+                    if star then starBtns[i] = star end
+                end
+
+                local function updateStars()
+                    for i = 1, maxStars do
+                        if starBtns[i] then
+                            local target = i <= value and STAR_ON or STAR_OFF
+                            TweenService:Create(starBtns[i], TWEEN_INFO, { TextColor3 = target }):Play()
+                        end
+                    end
+                end
+
+                for i = 1, maxStars do
+                    if starBtns[i] then
+                        starBtns[i].MouseButton1Click:Connect(function()
+                            value = (value == i) and 0 or i
+                            updateStars()
+                            if ratingConfig.callback then ratingConfig.callback(value) end
+                        end)
+                    end
+                end
+
+                updateStars()
+                row.Parent = card
+                updateSeparators()
+
+                return {
+                    set = function(_, val)
+                        value = math.clamp(val, 0, maxStars)
+                        updateStars()
+                    end,
+                    get = function()
+                        return value
+                    end,
+                }
+            end
+
+            function cardObj:addDataTable(dtConfig)
+                dtConfig = dtConfig or {}
+                local columns = dtConfig.columns or { "Col 1", "Col 2", "Col 3" }
+                local rows = dtConfig.rows or {}
+
+                local row = data_table_row_template:Clone()
+                elementCount = elementCount + 1
+                row.LayoutOrder = elementCount
+                row.Visible = true
+
+                local header = row:FindFirstChild("header")
+                local colNames = { "col_1", "col_2", "col_3" }
+                for i, name in ipairs(colNames) do
+                    local col = header:FindFirstChild(name)
+                    if col then col.Text = columns[i] or "" end
+                end
+
+                local rowFrames = {}
+
+                local function addTableRow(data, index)
+                    local cell = data_table_cell_template:Clone()
+                    cell.Name = "row_" .. index
+                    cell.LayoutOrder = index + 1
+                    cell.Visible = true
+
+                    local c1 = cell:FindFirstChild("cell_1")
+                    local c2 = cell:FindFirstChild("cell_2")
+                    local c3 = cell:FindFirstChild("cell_3")
+
+                    if c1 then c1.Text = tostring(data[1] or "") end
+                    if c2 then c2.Text = tostring(data[2] or "") end
+                    if c3 then
+                        local label = c3:FindFirstChild("label")
+                        local dot = c3:FindFirstChild("dot")
+                        if type(data[3]) == "table" then
+                            if label then
+                                label.Text = data[3].text or ""
+                                label.TextColor3 = data[3].color or TEXT_COLOR
+                            end
+                            if dot then dot.BackgroundColor3 = data[3].color or ACCENT end
+                        else
+                            if label then
+                                label.Text = tostring(data[3] or "")
+                                label.TextColor3 = TEXT_COLOR
+                            end
+                            if dot then dot.Visible = false end
+                        end
+                    end
+
+                    cell.Parent = row
+                    rowFrames[#rowFrames + 1] = cell
+                end
+
+                for i, data in ipairs(rows) do
+                    addTableRow(data, i)
+                end
+
+                row.Parent = card
+                updateSeparators()
+
+                return {
+                    addRow = function(_, data)
+                        addTableRow(data, #rowFrames + 1)
+                    end,
+                    clear = function()
+                        for _, rf in ipairs(rowFrames) do rf:Destroy() end
+                        rowFrames = {}
+                    end,
+                    get = function()
+                        return #rowFrames
+                    end,
+                }
+            end
+
+            function cardObj:addStatCard(scConfig)
+                scConfig = scConfig or {}
+                local stats = scConfig.stats or {}
+
+                local row = stat_card_row_template:Clone()
+                elementCount = elementCount + 1
+                row.LayoutOrder = elementCount
+                row.Visible = true
+
+                local statFrames = {}
+                local colWidth = 1 / math.max(#stats, 1)
+
+                for i, stat in ipairs(stats) do
+                    local entry = stat_entry_template:Clone()
+                    entry.Name = "stat_" .. i
+                    entry.Visible = true
+                    entry.Size = UDim2.new(colWidth, 0, 1, 0)
+                    entry.Position = UDim2.new((i - 1) * colWidth, 0, 0, 0)
+
+                    entry:FindFirstChild("label").Text = stat.label or ""
+                    entry:FindFirstChild("value").Text = stat.value or ""
+                    local trend = entry:FindFirstChild("trend")
+                    if trend then trend.Text = stat.trend or "" end
+
+                    entry.Parent = row
+                    statFrames[i] = entry
+
+                    if i < #stats then
+                        local div = Instance.new("Frame")
+                        div.Name = "divider_" .. i
+                        div.Size = UDim2.new(0, 1, 0, 30)
+                        div.Position = UDim2.new(i * colWidth, 0, 0.5, 0)
+                        div.AnchorPoint = Vector2.new(0.5, 0.5)
+                        div.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                        div.BackgroundTransparency = 0.9
+                        div.BorderSizePixel = 0
+                        div.Parent = row
+                    end
+                end
+
+                row.Parent = card
+                updateSeparators()
+
+                return {
+                    set = function(_, index, key, val)
+                        local f = statFrames[index]
+                        if f then
+                            local child = f:FindFirstChild(key)
+                            if child then child.Text = tostring(val) end
+                        end
+                    end,
+                    get = function(_, index)
+                        local f = statFrames[index]
+                        if not f then return nil end
+                        return {
+                            label = f:FindFirstChild("label").Text,
+                            value = f:FindFirstChild("value").Text,
+                            trend = f:FindFirstChild("trend") and f:FindFirstChild("trend").Text or "",
+                        }
+                    end,
+                }
+            end
+
+            function cardObj:addTimeline(tlConfig)
+                tlConfig = tlConfig or {}
+                local events = tlConfig.events or {}
+
+                local row = timeline_row_template:Clone()
+                elementCount = elementCount + 1
+                row.LayoutOrder = elementCount
+                row.Visible = true
+
+                local eventHeight = 28
+                local totalHeight = math.max(#events * eventHeight, eventHeight)
+                row.Size = UDim2.new(1, 0, 0, totalHeight)
+
+                local line = row:FindFirstChild("line")
+                if line then line.Size = UDim2.new(0, 2, 1, 0) end
+
+                local eventFrames = {}
+
+                for i, ev in ipairs(events) do
+                    local evFrame = timeline_event_template:Clone()
+                    evFrame.Name = "event_" .. i
+                    evFrame.Position = UDim2.new(0, 0, 0, (i - 1) * eventHeight)
+                    evFrame.Visible = true
+
+                    evFrame:FindFirstChild("title").Text = ev.title or ""
+                    evFrame:FindFirstChild("desc").Text = ev.desc or ""
+                    evFrame:FindFirstChild("time").Text = ev.time or ""
+
+                    local dot = evFrame:FindFirstChild("dot")
+                    if dot and ev.color then dot.BackgroundColor3 = ev.color end
+
+                    evFrame.Parent = row
+                    eventFrames[i] = evFrame
+                end
+
+                row.Parent = card
+                updateSeparators()
+
+                return {
+                    addEvent = function(_, ev)
+                        local i = #eventFrames + 1
+                        local evFrame = timeline_event_template:Clone()
+                        evFrame.Name = "event_" .. i
+                        evFrame.Position = UDim2.new(0, 0, 0, (i - 1) * eventHeight)
+                        evFrame.Visible = true
+                        evFrame:FindFirstChild("title").Text = ev.title or ""
+                        evFrame:FindFirstChild("desc").Text = ev.desc or ""
+                        evFrame:FindFirstChild("time").Text = ev.time or ""
+                        if ev.color then evFrame:FindFirstChild("dot").BackgroundColor3 = ev.color end
+                        evFrame.Parent = row
+                        eventFrames[i] = evFrame
+                        row.Size = UDim2.new(1, 0, 0, i * eventHeight)
+                    end,
+                    clear = function()
+                        for _, ef in ipairs(eventFrames) do ef:Destroy() end
+                        eventFrames = {}
+                        row.Size = UDim2.new(1, 0, 0, eventHeight)
+                    end,
+                    get = function()
+                        return #eventFrames
+                    end,
+                }
+            end
+
             return cardObj
         end
 
@@ -1071,6 +1768,272 @@ function lib.new(config)
         end)
 
         return tab
+    end
+
+    local notifBadge = minimized_bar_ref and minimized_bar_ref:FindFirstChild("notif_badge")
+    local notifCount = 0
+
+    local function updateNotifBadge()
+        if notifBadge then
+            notifBadge.Visible = notifCount > 0
+            local countLabel = notifBadge:FindFirstChild("count")
+            if countLabel then countLabel.Text = tostring(notifCount) end
+        end
+    end
+    updateNotifBadge()
+
+    function window:notify(notifConfig)
+        notifConfig = notifConfig or {}
+        local notifType = notifConfig.type or "info"
+        local duration = notifConfig.duration or 3
+
+        local notif = notif_template:Clone()
+        notif.Visible = true
+
+        local dot = notif:FindFirstChild("dot")
+        if dot then dot.BackgroundColor3 = NOTIF_COLORS[notifType] or NOTIF_COLORS.info end
+
+        local titleLabel = notif:FindFirstChild("title")
+        if titleLabel then titleLabel.Text = notifConfig.title or "Notification" end
+
+        local msgLabel = notif:FindFirstChild("message")
+        if msgLabel then msgLabel.Text = notifConfig.message or "" end
+
+        notifCount = notifCount + 1
+        updateNotifBadge()
+
+        notif.Position = UDim2.new(1, 20, 0, 0)
+        notif.Parent = notifications_container
+
+        TweenService:Create(notif, TweenInfo.new(0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+            Position = UDim2.new(0, 0, 0, 0),
+        }):Play()
+
+        task.delay(duration, function()
+            notifCount = math.max(0, notifCount - 1)
+            updateNotifBadge()
+            local fadeOut = TweenService:Create(notif, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.In), {
+                Position = UDim2.new(1, 20, 0, 0),
+            })
+            fadeOut:Play()
+            fadeOut.Completed:Connect(function()
+                notif:Destroy()
+            end)
+        end)
+    end
+
+    function window:showModal(modalConfig)
+        modalConfig = modalConfig or {}
+
+        modal_frame.Visible = true
+        modal_backdrop.Visible = true
+
+        local titleLabel = modal_frame:FindFirstChild("title")
+        if titleLabel then titleLabel.Text = modalConfig.title or "Confirm" end
+
+        local msgLabel = modal_frame:FindFirstChild("message")
+        if msgLabel then msgLabel.Text = modalConfig.message or "" end
+
+        local buttons = modal_frame:FindFirstChild("buttons")
+        local confirmBtn = buttons and buttons:FindFirstChild("confirm")
+        local cancelBtn = buttons and buttons:FindFirstChild("cancel")
+
+        if confirmBtn then confirmBtn.Text = modalConfig.confirmText or "Confirm" end
+        if cancelBtn then cancelBtn.Text = modalConfig.cancelText or "Cancel" end
+
+        local conns = {}
+
+        local function closeModal(result)
+            modal_frame.Visible = false
+            modal_backdrop.Visible = false
+            for _, c in ipairs(conns) do c:Disconnect() end
+            if modalConfig.callback then modalConfig.callback(result) end
+        end
+
+        if confirmBtn then
+            table.insert(conns, confirmBtn.MouseButton1Click:Connect(function() closeModal(true) end))
+        end
+        if cancelBtn then
+            table.insert(conns, cancelBtn.MouseButton1Click:Connect(function() closeModal(false) end))
+        end
+        table.insert(conns, modal_backdrop.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then closeModal(false) end
+        end))
+    end
+
+    do
+        local isMinimized = false
+        local search_closed_btn = title_bar:FindFirstChild("search_closed")
+        local search_open_frame = title_bar:FindFirstChild("search_open")
+        local minimize_btn = title_bar:FindFirstChild("minimize_btn")
+
+        if minimize_btn then
+            minimize_btn.MouseButton1Click:Connect(function()
+                if isMinimized then return end
+                isMinimized = true
+                main_frame.Visible = false
+                minimized_bar_ref.Visible = true
+            end)
+        end
+
+        if minimized_bar_ref then
+            local maxBtn = minimized_bar_ref:FindFirstChild("maximize_btn")
+            if maxBtn then
+                maxBtn.MouseButton1Click:Connect(function()
+                    if not isMinimized then return end
+                    isMinimized = false
+                    minimized_bar_ref.Visible = false
+                    main_frame.Visible = true
+                end)
+            end
+
+            local barDragging = false
+            local barDragOffset = Vector2.new()
+            local dragHandle = minimized_bar_ref:FindFirstChild("drag_handle") or minimized_bar_ref
+
+            dragHandle.InputBegan:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                    barDragging = true
+                    local pos = minimized_bar_ref.AbsolutePosition + minimized_bar_ref.AbsoluteSize * minimized_bar_ref.AnchorPoint
+                    barDragOffset = pos - Vector2.new(input.Position.X, input.Position.Y)
+                end
+            end)
+            dragHandle.InputEnded:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 then barDragging = false end
+            end)
+
+            local barDragConn = UserInputService.InputChanged:Connect(newcclosure(function(input)
+                if barDragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+                    TweenService:Create(minimized_bar_ref, TweenInfo.new(0.08, Enum.EasingStyle.Quad), {
+                        Position = UDim2.new(0, input.Position.X + barDragOffset.X, 0, input.Position.Y + barDragOffset.Y),
+                    }):Play()
+                end
+            end))
+            table.insert(_G._uiLibConnections, barDragConn)
+        end
+
+        function window:minimize()
+            if not isMinimized and minimize_btn then
+                isMinimized = true
+                main_frame.Visible = false
+                minimized_bar_ref.Visible = true
+            end
+        end
+
+        function window:maximize()
+            if isMinimized then
+                isMinimized = false
+                minimized_bar_ref.Visible = false
+                main_frame.Visible = true
+            end
+        end
+
+        if search_closed_btn and search_open_frame then
+            local searchInput = search_open_frame:FindFirstChild("input")
+            local searchClose = search_open_frame:FindFirstChild("close")
+
+            search_open_frame.Visible = false
+
+            search_closed_btn.MouseButton1Click:Connect(function()
+                search_closed_btn.Visible = false
+                search_open_frame.Visible = true
+                if searchInput then searchInput:CaptureFocus() end
+            end)
+
+            if searchClose then
+                searchClose.MouseButton1Click:Connect(function()
+                    search_open_frame.Visible = false
+                    search_closed_btn.Visible = true
+                    if searchInput then searchInput.Text = "" end
+                    for _, child in ipairs(content:GetDescendants()) do
+                        if child:IsA("GuiObject") and child:FindFirstChild("label") and child:FindFirstChild("sep") then
+                            child.Visible = true
+                        end
+                    end
+                end)
+            end
+
+            if searchInput then
+                searchInput:GetPropertyChangedSignal("Text"):Connect(function()
+                    local query = searchInput.Text:lower()
+                    for _, child in ipairs(content:GetDescendants()) do
+                        if child:IsA("GuiObject") and child:FindFirstChild("label") and child:FindFirstChild("sep") then
+                            if query == "" then
+                                child.Visible = true
+                            else
+                                child.Visible = child:FindFirstChild("label").Text:lower():find(query, 1, true) ~= nil
+                            end
+                        end
+                    end
+                end)
+            end
+        end
+    end
+
+    if login_panel_ref then
+        login_panel_ref.Visible = false
+
+        function window:showLogin(loginConfig)
+            loginConfig = loginConfig or {}
+            login_panel_ref.Visible = true
+            main_frame.Visible = false
+
+            local titleLabel = login_panel_ref:FindFirstChild("title")
+            if titleLabel then titleLabel.Text = loginConfig.title or "Welcome Back" end
+
+            local subtitleLabel = login_panel_ref:FindFirstChild("subtitle")
+            if subtitleLabel then subtitleLabel.Text = loginConfig.subtitle or "Sign in to continue" end
+
+            local status = login_panel_ref:FindFirstChild("status")
+            if status then status.Visible = false end
+
+            local usernameInput = login_panel_ref:FindFirstChild("username_input")
+            local keyInput = login_panel_ref:FindFirstChild("key_input")
+            local signInBtn = login_panel_ref:FindFirstChild("sign_in_btn")
+
+            local usernameBox = usernameInput and usernameInput:FindFirstChild("input")
+            local keyBox = keyInput and keyInput:FindFirstChild("input")
+
+            if signInBtn then
+                signInBtn.MouseButton1Click:Connect(function()
+                    local user = usernameBox and usernameBox.Text or ""
+                    local key = keyBox and keyBox.Text or ""
+                    if loginConfig.callback then
+                        local success, msg = loginConfig.callback(user, key)
+                        if success then
+                            login_panel_ref.Visible = false
+                            main_frame.Visible = true
+                        else
+                            if status then
+                                status.Text = msg or "Invalid credentials"
+                                status.Visible = true
+                            end
+                        end
+                    else
+                        login_panel_ref.Visible = false
+                        main_frame.Visible = true
+                    end
+                end)
+            end
+        end
+    end
+
+    if tooltip_frame then
+        tooltip_frame.Visible = false
+        local tooltipLabel = tooltip_frame:FindFirstChild("label")
+
+        function window:showTooltip(text, guiObject)
+            if not tooltipLabel then return end
+            tooltipLabel.Text = text or ""
+            tooltip_frame.Visible = true
+            local pos = guiObject.AbsolutePosition
+            local size = guiObject.AbsoluteSize
+            tooltip_frame.Position = UDim2.new(0, pos.X + size.X / 2, 0, pos.Y - 30)
+        end
+
+        function window:hideTooltip()
+            tooltip_frame.Visible = false
+        end
     end
 
     task.defer(function()
