@@ -101,19 +101,6 @@ local card_template = orig_card:Clone()
 for _, child in ipairs(card_template:GetChildren()) do
     if child:IsA("GuiObject") then child:Destroy() end
 end
-do
-    local oldStroke = card_template:FindFirstChildOfClass("UIStroke")
-    local strokeColor = oldStroke and oldStroke.Color or Color3.fromRGB(60, 45, 32)
-    local strokeTransparency = oldStroke and oldStroke.Transparency or 0.5
-    local strokeThickness = oldStroke and oldStroke.Thickness or 1
-    if oldStroke then oldStroke:Destroy() end
-    local newStroke = Instance.new("UIStroke")
-    newStroke.Color = strokeColor
-    newStroke.Transparency = strokeTransparency
-    newStroke.Thickness = strokeThickness
-    newStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-    newStroke.Parent = card_template
-end
 
 local TweenService = cloneref(game:GetService("TweenService"))
 local UserInputService = cloneref(game:GetService("UserInputService"))
@@ -164,11 +151,9 @@ function lib.new(config)
     if login_panel_ref then login_panel_ref.Visible = false end
     if modal_frame then modal_frame.Visible = false end
     if modal_backdrop then modal_backdrop.Visible = false end
-    for _, child in ipairs(notifications_container:GetChildren()) do
-        if child:IsA("Frame") then child:Destroy() end
+    for _, notif in ipairs(notifications_container:GetChildren()) do
+        if notif:IsA("Frame") then notif.Visible = false end
     end
-    notifications_container.AnchorPoint = Vector2.new(1, 0)
-    notifications_container.Position = UDim2.new(1, -8, 0, 8)
     title_bar.brand_name.Text = config.name or "UI Library"
 
     if config.logo then
@@ -1279,28 +1264,10 @@ function lib.new(config)
                 menu.ClipsDescendants = true
                 menu.Parent = row
 
-                local msMenuLayout = menu:FindFirstChildOfClass("UIListLayout")
-                if not msMenuLayout then
-                    msMenuLayout = Instance.new("UIListLayout")
-                    msMenuLayout.SortOrder = Enum.SortOrder.LayoutOrder
-                    msMenuLayout.Parent = menu
-                end
-                msMenuLayout.Padding = UDim.new(0, 4)
-                local msMenuPad = menu:FindFirstChildOfClass("UIPadding")
-                if not msMenuPad then
-                    msMenuPad = Instance.new("UIPadding")
-                    msMenuPad.Parent = menu
-                end
-                msMenuPad.PaddingTop = UDim.new(0, 6)
-                msMenuPad.PaddingBottom = UDim.new(0, 6)
-                msMenuPad.PaddingLeft = UDim.new(0, 4)
-                msMenuPad.PaddingRight = UDim.new(0, 4)
-
                 local optButtons = {}
                 local optHeight = 26
-                local msGap = 4
-                local msPadY = 12
-                local fullHeight = #options * optHeight + math.max(0, #options - 1) * msGap + msPadY
+                local padding = 8
+                local fullHeight = #options * optHeight + padding
 
                 local function updateOptStyles()
                     for _, ob in ipairs(optButtons) do
