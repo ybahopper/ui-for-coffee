@@ -452,11 +452,18 @@ function lib.new(config)
             local column = (side == "right") and right or left
 
             local card = card_template:Clone()
+            for _, st in ipairs(card:GetDescendants()) do
+                if st:IsA("UIStroke") then st.ApplyStrokeMode = Enum.ApplyStrokeMode.Border end
+            end
+            local cStroke = card:FindFirstChildOfClass("UIStroke")
+            if cStroke then cStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border end
 
             if cardConfig.name then
                 local header = section_header_template:Clone()
                 header.title.Text = cardConfig.name
                 header.Visible = true
+                local hStroke = header:FindFirstChildOfClass("UIStroke")
+                if hStroke then hStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border end
                 header.Parent = card
             end
 
@@ -1833,18 +1840,28 @@ function lib.new(config)
         notifCount = notifCount + 1
         updateNotifBadge()
 
-        notif.Position = UDim2.new(1, 20, 0, 0)
-        notif.Parent = notifications_container
+        -- Count existing notifications for stacking
+        local yOffset = 0
+        for _, child in ipairs(AnimLoggerUI:GetChildren()) do
+            if child.Name == "_notif" and child:IsA("Frame") and child.Visible then
+                yOffset = yOffset + child.AbsoluteSize.Y + 8
+            end
+        end
+
+        notif.Name = "_notif"
+        notif.AnchorPoint = Vector2.new(1, 0)
+        notif.Position = UDim2.new(1, 20, 0, 20 + yOffset)
+        notif.Parent = AnimLoggerUI
 
         TweenService:Create(notif, TweenInfo.new(0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
-            Position = UDim2.new(0, 0, 0, 0),
+            Position = UDim2.new(1, -20, 0, 20 + yOffset),
         }):Play()
 
         task.delay(duration, function()
             notifCount = math.max(0, notifCount - 1)
             updateNotifBadge()
             local fadeOut = TweenService:Create(notif, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.In), {
-                Position = UDim2.new(1, 20, 0, 0),
+                Position = UDim2.new(1, 20, 0, 20 + yOffset),
             })
             fadeOut:Play()
             fadeOut.Completed:Connect(function()
