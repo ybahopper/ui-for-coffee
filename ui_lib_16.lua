@@ -465,6 +465,7 @@ function lib.new(config)
             local cardStroke = card:FindFirstChildOfClass("UIStroke")
             if cardStroke then
                 cardStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+                cardStroke.BorderStrokePosition = Enum.BorderStrokePosition.Inner
             end
 
             table.insert(tab._cards, card)
