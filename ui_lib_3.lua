@@ -42,6 +42,10 @@ local right_col_template = content.right_column:Clone()
 
 local orig_card = left_col_template.card
 local section_header_template = orig_card:FindFirstChild("section_header"):Clone()
+do
+    local shStroke = section_header_template:FindFirstChildOfClass("UIStroke")
+    if shStroke then shStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border end
+end
 local toggle_row_template = orig_card:FindFirstChild("toggle_row_off"):Clone()
 local slider_row_template = orig_card:FindFirstChild("slider_row"):Clone()
 local dropdown_row_template = orig_card:FindFirstChild("dropdown_row"):Clone()
@@ -156,6 +160,9 @@ function lib.new(config)
     for _, child in ipairs(notifications_container:GetChildren()) do
         if child:IsA("Frame") or child:IsA("UIListLayout") then child:Destroy() end
     end
+    notifications_container.Visible = true
+    notifications_container.ClipsDescendants = false
+    notifications_container.ZIndex = 10
     title_bar.brand_name.Text = config.name or "UI Library"
 
     if config.logo then
@@ -1267,19 +1274,27 @@ function lib.new(config)
                 menu.Parent = row
 
                 local msMenuLayout = menu:FindFirstChildOfClass("UIListLayout")
-                if msMenuLayout then msMenuLayout.Padding = UDim.new(0, 2) end
+                if not msMenuLayout then
+                    msMenuLayout = Instance.new("UIListLayout")
+                    msMenuLayout.SortOrder = Enum.SortOrder.LayoutOrder
+                    msMenuLayout.Parent = menu
+                end
+                msMenuLayout.Padding = UDim.new(0, 4)
                 local msMenuPad = menu:FindFirstChildOfClass("UIPadding")
                 if not msMenuPad then
                     msMenuPad = Instance.new("UIPadding")
                     msMenuPad.Parent = menu
                 end
-                msMenuPad.PaddingTop = UDim.new(0, 4)
-                msMenuPad.PaddingBottom = UDim.new(0, 4)
+                msMenuPad.PaddingTop = UDim.new(0, 6)
+                msMenuPad.PaddingBottom = UDim.new(0, 6)
+                msMenuPad.PaddingLeft = UDim.new(0, 4)
+                msMenuPad.PaddingRight = UDim.new(0, 4)
 
                 local optButtons = {}
                 local optHeight = 26
-                local padding = 8
-                local fullHeight = #options * optHeight + math.max(0, #options - 1) * 2 + padding
+                local msGap = 4
+                local msPadY = 12
+                local fullHeight = #options * optHeight + math.max(0, #options - 1) * msGap + msPadY
 
                 local function updateOptStyles()
                     for _, ob in ipairs(optButtons) do
@@ -1801,6 +1816,10 @@ function lib.new(config)
 
         local notif = notif_template:Clone()
         notif.Visible = true
+        notif.ZIndex = 10
+        for _, desc in ipairs(notif:GetDescendants()) do
+            if desc:IsA("GuiObject") then desc.ZIndex = 10 end
+        end
 
         local dot = notif:FindFirstChild("dot")
         if dot then dot.BackgroundColor3 = NOTIF_COLORS[notifType] or NOTIF_COLORS.info end
