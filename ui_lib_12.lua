@@ -108,6 +108,7 @@ local TextService = cloneref(game:GetService("TextService"))
 local Players = cloneref(game:GetService("Players"))
 local Heartbeat = cloneref(game:GetService("RunService")).Heartbeat
 local TWEEN_INFO = TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+local STROKE_CLIP_BUFFER = 4
 local TOGGLE_ON = {
     bg = Color3.fromRGB(194, 137, 92),
     bgTransparency = 0,
@@ -285,8 +286,8 @@ function lib.new(config)
             prevTab._right.ClipsDescendants = true
             prevTab._left.AutomaticSize = Enum.AutomaticSize.None
             prevTab._right.AutomaticSize = Enum.AutomaticSize.None
-            prevTab._left.Size = UDim2.new(prevLeftX.Scale, prevLeftX.Offset, 0, prevLeftH)
-            prevTab._right.Size = UDim2.new(prevRightX.Scale, prevRightX.Offset, 0, prevRightH)
+            prevTab._left.Size = UDim2.new(prevLeftX.Scale, prevLeftX.Offset, 0, prevLeftH + STROKE_CLIP_BUFFER)
+            prevTab._right.Size = UDim2.new(prevRightX.Scale, prevRightX.Offset, 0, prevRightH + STROKE_CLIP_BUFFER)
 
             local closeTi = TweenInfo.new(CLOSE_TIME, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
             TweenService:Create(prevTab._left, closeTi, {
@@ -363,10 +364,10 @@ function lib.new(config)
 
             local openTi = TweenInfo.new(OPEN_TIME, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
             TweenService:Create(target._left, openTi, {
-                Size = UDim2.new(tgtLeftX.Scale, tgtLeftX.Offset, 0, newLeftH),
+                Size = UDim2.new(tgtLeftX.Scale, tgtLeftX.Offset, 0, newLeftH + STROKE_CLIP_BUFFER),
             }):Play()
             TweenService:Create(target._right, openTi, {
-                Size = UDim2.new(tgtRightX.Scale, tgtRightX.Offset, 0, newRightH),
+                Size = UDim2.new(tgtRightX.Scale, tgtRightX.Offset, 0, newRightH + STROKE_CLIP_BUFFER),
             }):Play()
 
             for ci, card in ipairs(target._cards) do
