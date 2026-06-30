@@ -108,7 +108,7 @@ local TextService = cloneref(game:GetService("TextService"))
 local Players = cloneref(game:GetService("Players"))
 local Heartbeat = cloneref(game:GetService("RunService")).Heartbeat
 local TWEEN_INFO = TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-local STROKE_CLIP_BUFFER = 4
+local STROKE_FADE_TIME = 0.2
 local TOGGLE_ON = {
     bg = Color3.fromRGB(194, 137, 92),
     bgTransparency = 0,
@@ -282,12 +282,15 @@ function lib.new(config)
             local prevLeftH = prevTab._left.AbsoluteSize.Y
             local prevRightH = prevTab._right.AbsoluteSize.Y
 
+            for _, cm in ipairs(outCardMeta) do
+                if cm.stroke then cm.stroke.Enabled = false end
+            end
             prevTab._left.ClipsDescendants = true
             prevTab._right.ClipsDescendants = true
             prevTab._left.AutomaticSize = Enum.AutomaticSize.None
             prevTab._right.AutomaticSize = Enum.AutomaticSize.None
-            prevTab._left.Size = UDim2.new(prevLeftX.Scale, prevLeftX.Offset, 0, prevLeftH + STROKE_CLIP_BUFFER)
-            prevTab._right.Size = UDim2.new(prevRightX.Scale, prevRightX.Offset, 0, prevRightH + STROKE_CLIP_BUFFER)
+            prevTab._left.Size = UDim2.new(prevLeftX.Scale, prevLeftX.Offset, 0, prevLeftH)
+            prevTab._right.Size = UDim2.new(prevRightX.Scale, prevRightX.Offset, 0, prevRightH)
 
             local closeTi = TweenInfo.new(CLOSE_TIME, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
             TweenService:Create(prevTab._left, closeTi, {
@@ -312,7 +315,7 @@ function lib.new(config)
             for ci, card in ipairs(prevTab._cards) do
                 local m = outCardMeta[ci]
                 card.BackgroundTransparency = m.bg
-                if m.stroke then m.stroke.Transparency = m.strokeT end
+                if m.stroke then m.stroke.Transparency = m.strokeT; m.stroke.Enabled = true end
                 for _, t in ipairs(m.texts) do t.obj.TextTransparency = t.origT end
                 for _, img in ipairs(m.images) do img.obj.ImageTransparency = img.origT end
             end
@@ -345,6 +348,9 @@ function lib.new(config)
             local tgtLeftX = target._left.Size.X
             local tgtRightX = target._right.Size.X
 
+            for _, cm in ipairs(inCardMeta) do
+                if cm.stroke then cm.stroke.Enabled = false end
+            end
             target._left.ClipsDescendants = true
             target._right.ClipsDescendants = true
             target._left.AutomaticSize = Enum.AutomaticSize.None
@@ -364,10 +370,10 @@ function lib.new(config)
 
             local openTi = TweenInfo.new(OPEN_TIME, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
             TweenService:Create(target._left, openTi, {
-                Size = UDim2.new(tgtLeftX.Scale, tgtLeftX.Offset, 0, newLeftH + STROKE_CLIP_BUFFER),
+                Size = UDim2.new(tgtLeftX.Scale, tgtLeftX.Offset, 0, newLeftH),
             }):Play()
             TweenService:Create(target._right, openTi, {
-                Size = UDim2.new(tgtRightX.Scale, tgtRightX.Offset, 0, newRightH + STROKE_CLIP_BUFFER),
+                Size = UDim2.new(tgtRightX.Scale, tgtRightX.Offset, 0, newRightH),
             }):Play()
 
             for ci, card in ipairs(target._cards) do
@@ -375,9 +381,6 @@ function lib.new(config)
                 local d = (ci - 1) * CARD_STAGGER
                 local fadeInTi = TweenInfo.new(FADE_IN_TIME, Enum.EasingStyle.Quint, Enum.EasingDirection.Out, 0, false, d)
                 TweenService:Create(card, fadeInTi, { BackgroundTransparency = m.bg }):Play()
-                if m.stroke then
-                    TweenService:Create(m.stroke, fadeInTi, { Transparency = m.strokeT }):Play()
-                end
                 for _, t in ipairs(m.texts) do
                     TweenService:Create(t.obj, fadeInTi, { TextTransparency = t.origT }):Play()
                 end
@@ -397,6 +400,14 @@ function lib.new(config)
             target._right.AutomaticSize = Enum.AutomaticSize.Y
             target._left.ClipsDescendants = false
             target._right.ClipsDescendants = false
+
+            local strokeFadeTi = TweenInfo.new(STROKE_FADE_TIME, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+            for _, cm in ipairs(inCardMeta) do
+                if cm.stroke then
+                    cm.stroke.Enabled = true
+                    TweenService:Create(cm.stroke, strokeFadeTi, { Transparency = cm.strokeT }):Play()
+                end
+            end
 
             tabSwitching = false
         end)
