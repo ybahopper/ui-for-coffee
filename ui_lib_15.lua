@@ -101,8 +101,6 @@ local card_template = orig_card:Clone()
 for _, child in ipairs(card_template:GetChildren()) do
     if child:IsA("GuiObject") then child:Destroy() end
 end
-local _cardStroke = card_template:FindFirstChildOfClass("UIStroke")
-if _cardStroke then _cardStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border end
 
 local TweenService = cloneref(game:GetService("TweenService"))
 local UserInputService = cloneref(game:GetService("UserInputService"))
@@ -463,6 +461,11 @@ function lib.new(config)
 
             card.Visible = true
             card.Parent = column
+
+            local cardStroke = card:FindFirstChildOfClass("UIStroke")
+            if cardStroke then
+                cardStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+            end
 
             table.insert(tab._cards, card)
 
