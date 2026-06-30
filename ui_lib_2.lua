@@ -101,6 +101,8 @@ local card_template = orig_card:Clone()
 for _, child in ipairs(card_template:GetChildren()) do
     if child:IsA("GuiObject") then child:Destroy() end
 end
+local cardTemplateStroke = card_template:FindFirstChildOfClass("UIStroke")
+if cardTemplateStroke then cardTemplateStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border end
 
 local TweenService = cloneref(game:GetService("TweenService"))
 local UserInputService = cloneref(game:GetService("UserInputService"))
@@ -151,8 +153,8 @@ function lib.new(config)
     if login_panel_ref then login_panel_ref.Visible = false end
     if modal_frame then modal_frame.Visible = false end
     if modal_backdrop then modal_backdrop.Visible = false end
-    for _, notif in ipairs(notifications_container:GetChildren()) do
-        if notif:IsA("Frame") then notif.Visible = false end
+    for _, child in ipairs(notifications_container:GetChildren()) do
+        if child:IsA("Frame") or child:IsA("UIListLayout") then child:Destroy() end
     end
     title_bar.brand_name.Text = config.name or "UI Library"
 
@@ -1264,10 +1266,20 @@ function lib.new(config)
                 menu.ClipsDescendants = true
                 menu.Parent = row
 
+                local msMenuLayout = menu:FindFirstChildOfClass("UIListLayout")
+                if msMenuLayout then msMenuLayout.Padding = UDim.new(0, 2) end
+                local msMenuPad = menu:FindFirstChildOfClass("UIPadding")
+                if not msMenuPad then
+                    msMenuPad = Instance.new("UIPadding")
+                    msMenuPad.Parent = menu
+                end
+                msMenuPad.PaddingTop = UDim.new(0, 4)
+                msMenuPad.PaddingBottom = UDim.new(0, 4)
+
                 local optButtons = {}
                 local optHeight = 26
                 local padding = 8
-                local fullHeight = #options * optHeight + padding
+                local fullHeight = #options * optHeight + math.max(0, #options - 1) * 2 + padding
 
                 local function updateOptStyles()
                     for _, ob in ipairs(optButtons) do
