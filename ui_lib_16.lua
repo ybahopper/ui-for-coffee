@@ -23,7 +23,7 @@ _G._uiLibConnections = {}
 
 local RBXMXParser = load("RBXMXParser.lua")
 local _temp = Instance.new("Folder")
-local AnimLoggerUI = RBXMXParser.Deserialize(fetch("uilib_1.rbxmx"), _temp)[1]
+local AnimLoggerUI = RBXMXParser.Deserialize(fetch("uilib_2.rbxmx"), _temp)[1]
 
 local main_frame = AnimLoggerUI.main_frame
 local content = main_frame.content
@@ -462,11 +462,6 @@ function lib.new(config)
             card.Visible = true
             card.Parent = column
 
-            local cardStroke = card:FindFirstChildOfClass("UIStroke")
-            if cardStroke then
-                cardStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-                cardStroke.BorderStrokePosition = Enum.BorderStrokePosition.Inner
-            end
 
             table.insert(tab._cards, card)
 
