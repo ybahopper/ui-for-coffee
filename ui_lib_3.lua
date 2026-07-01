@@ -556,7 +556,6 @@ function lib.new(config)
                 end
 
                 applyStyle(state, false)
-                hoverify(toggle)
                 row.Parent = card
                 updateSeparators()
 
@@ -1950,7 +1949,6 @@ function lib.new(config)
             setActiveTab(tab, true)
         end
 
-        hoverify(btn)
         btn.MouseButton1Click:Connect(function()
             setActiveTab(tab)
         end)
