@@ -114,13 +114,17 @@ local TWEEN_INFO = TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirecti
 -- ponytail: hover helper, reads current bg live so state changes don't break it
 local function hoverify(el)
     local restBg
+    local enabled = true
     el.MouseEnter:Connect(function()
+        if not enabled then return end
         restBg = el.BackgroundTransparency
         TweenService:Create(el, TWEEN_INFO, { BackgroundTransparency = math.max(restBg - 0.08, 0) }):Play()
     end)
     el.MouseLeave:Connect(function()
+        if not enabled then return end
         if restBg then TweenService:Create(el, TWEEN_INFO, { BackgroundTransparency = restBg }):Play() end
     end)
+    return function(on) enabled = on end
 end
 local TOGGLE_ON = {
     bg = Color3.fromRGB(194, 137, 92),
@@ -2318,8 +2322,10 @@ function lib.new(config)
                 end
             end
 
-            hoverify(search_closed_btn)
+            local setSearchHover = hoverify(search_closed_btn)
             search_closed_btn.MouseButton1Click:Connect(function()
+                setSearchHover(false)
+                search_closed_btn.BackgroundTransparency = 1
                 -- icon slides left, bar fades in behind it
                 search_open_frame.Size = UDim2.new(0, 0, 0, search_open_frame.Size.Y.Offset)
                 search_open_frame.BackgroundTransparency = 1
@@ -2352,6 +2358,7 @@ function lib.new(config)
                 tween.Completed:Connect(function()
                     search_open_frame.Visible = false
                     search_open_frame.BackgroundTransparency = searchBarBg
+                    setSearchHover(true)
                 end)
                 tween:Play()
                 if searchInput then searchInput.Text = "" end
