@@ -2080,7 +2080,12 @@ function lib.new(config)
         if search_closed_btn and search_open_frame then
             local searchInput = search_open_frame:FindFirstChild("input")
             local searchClose = search_open_frame:FindFirstChild("close")
+            local searchBtnPos = search_closed_btn.Position
+            local searchBarWidth = search_open_frame.Size.X.Offset
+            local searchSlidePos = UDim2.new(searchBtnPos.X.Scale, searchBtnPos.X.Offset - searchBarWidth, searchBtnPos.Y.Scale, searchBtnPos.Y.Offset)
+            local searchSlideTi = TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
             search_open_frame.Visible = false
+            search_open_frame.ClipsDescendants = true
 
             local function showAllColumns()
                 for _, t in ipairs(tabs) do
@@ -2106,15 +2111,23 @@ function lib.new(config)
             end
 
             search_closed_btn.MouseButton1Click:Connect(function()
-                search_closed_btn.Visible = false
+                -- icon slides left, bar reveals behind it
+                search_open_frame.Size = UDim2.new(0, 0, 0, search_open_frame.Size.Y.Offset)
                 search_open_frame.Visible = true
+                TweenService:Create(search_closed_btn, searchSlideTi, { Position = searchSlidePos }):Play()
+                TweenService:Create(search_open_frame, searchSlideTi, { Size = UDim2.new(0, searchBarWidth, 0, search_open_frame.Size.Y.Offset) }):Play()
                 if searchInput then searchInput:CaptureFocus() end
             end)
 
             if searchClose then
                 searchClose.MouseButton1Click:Connect(function()
-                    search_open_frame.Visible = false
-                    search_closed_btn.Visible = true
+                    -- slide icon back, collapse bar
+                    local tween = TweenService:Create(search_closed_btn, searchSlideTi, { Position = searchBtnPos })
+                    TweenService:Create(search_open_frame, searchSlideTi, { Size = UDim2.new(0, 0, 0, search_open_frame.Size.Y.Offset) }):Play()
+                    tween.Completed:Connect(function()
+                        search_open_frame.Visible = false
+                    end)
+                    tween:Play()
                     if searchInput then searchInput.Text = "" end
                     resetAllElements()
                     restoreActiveColumns()
