@@ -70,16 +70,14 @@ local progress_row_template = orig_right_card:FindFirstChild("progress_row"):Clo
 local rating_row_template = orig_right_card:FindFirstChild("rating_row"):Clone()
 
 local data_table_row_template = orig_right_card:FindFirstChild("data_table_row"):Clone()
-local dtTemplateBg = data_table_row_template:FindFirstChild("bg") or data_table_row_template
-local data_table_cell_template = dtTemplateBg:FindFirstChild("row_template"):Clone()
-for _, child in ipairs(dtTemplateBg:GetChildren()) do
+local data_table_cell_template = data_table_row_template:FindFirstChild("row_template"):Clone()
+for _, child in ipairs(data_table_row_template:GetChildren()) do
     if child:IsA("Frame") and child.Name:match("^row_") then child:Destroy() end
 end
 
 local stat_card_row_template = orig_right_card:FindFirstChild("stat_card_row"):Clone()
-local scTemplateBg = stat_card_row_template:FindFirstChild("bg") or stat_card_row_template
-local stat_entry_template = scTemplateBg:FindFirstChild("stat_template"):Clone()
-for _, child in ipairs(scTemplateBg:GetChildren()) do
+local stat_entry_template = stat_card_row_template:FindFirstChild("stat_template"):Clone()
+for _, child in ipairs(stat_card_row_template:GetChildren()) do
     if child:IsA("Frame") and (child.Name:match("^stat_%d") or child.Name == "divider") then child:Destroy() end
 end
 
@@ -106,38 +104,25 @@ end
 
 local _activeDropdownClose = nil
 
--- ponytail: wraps opaque rows so sep has breathing room. upgrade if templates get bg natively.
-local function wrapOpaqueRow(row)
-    if row:FindFirstChild("bg") then return row:FindFirstChild("bg") end
-    if row.BackgroundTransparency >= 0.5 then return row end
-    local bg = Instance.new("Frame")
-    bg.Name = "bg"
-    bg.BackgroundColor3 = row.BackgroundColor3
-    bg.BackgroundTransparency = row.BackgroundTransparency
-    bg.BorderSizePixel = 0
-    bg.ClipsDescendants = true
-    if row.AutomaticSize == Enum.AutomaticSize.Y then
-        bg.Size = UDim2.new(1, 0, 0, 0)
-        bg.AutomaticSize = Enum.AutomaticSize.Y
-    else
-        bg.Size = UDim2.new(1, 0, 1, -6)
-    end
-    bg.Position = UDim2.new(0, 0, 0, 0)
-    bg.Parent = row
-    local corner = row:FindFirstChildOfClass("UICorner")
-    if corner then corner.Parent = bg end
-    for _, child in ipairs(row:GetChildren()) do
-        if child ~= bg and child.Name ~= "sep" and child:IsA("GuiObject") then
-            child.Parent = bg
-        elseif child:IsA("UIListLayout") or child:IsA("UIPadding") then
-            child.Parent = bg
-        end
-    end
-    row.BackgroundTransparency = 1
-    row.ClipsDescendants = false
-    local sep = row:FindFirstChild("sep")
-    if sep then sep.LayoutOrder = 999 end
-    return bg
+-- ponytail: adds a transparent spacer with sep after opaque rows. replaces broken in-row sep.
+local function addSepSpacer(card, layoutOrder)
+    local spacer = Instance.new("Frame")
+    spacer.Name = "sep_spacer"
+    spacer.Size = UDim2.new(1, 0, 0, 6)
+    spacer.BackgroundTransparency = 1
+    spacer.BorderSizePixel = 0
+    spacer.LayoutOrder = layoutOrder
+    spacer.Parent = card
+    local sep = Instance.new("Frame")
+    sep.Name = "sep"
+    sep.Size = UDim2.new(1, 0, 0, 1)
+    sep.Position = UDim2.new(0, 0, 0.5, 0)
+    sep.AnchorPoint = Vector2.new(0, 0.5)
+    sep.BackgroundColor3 = Color3.new(1, 1, 1)
+    sep.BackgroundTransparency = 0.95
+    sep.BorderSizePixel = 0
+    sep.Parent = spacer
+    return spacer
 end
 
 local TweenService = cloneref(game:GetService("TweenService"))
@@ -1677,8 +1662,7 @@ function lib.new(config)
                 row.LayoutOrder = elementCount
                 row.Visible = true
 
-                local dtContainer = wrapOpaqueRow(row)
-                local header = dtContainer:FindFirstChild("header")
+                local header = row:FindFirstChild("header")
                 local colNames = { "col_1", "col_2", "col_3" }
                 for i, name in ipairs(colNames) do
                     local col = header:FindFirstChild(name)
@@ -1717,7 +1701,7 @@ function lib.new(config)
                         end
                     end
 
-                    cell.Parent = dtContainer
+                    cell.Parent = row
                     rowFrames[#rowFrames + 1] = cell
                 end
 
@@ -1725,7 +1709,11 @@ function lib.new(config)
                     addTableRow(data, i)
                 end
 
+                local oldSep = row:FindFirstChild("sep")
+                if oldSep then oldSep:Destroy() end
                 row.Parent = card
+                elementCount = elementCount + 1
+                addSepSpacer(card, elementCount)
                 updateSeparators()
 
                 return {
@@ -1751,7 +1739,6 @@ function lib.new(config)
                 row.LayoutOrder = elementCount
                 row.Visible = true
 
-                local scContainer = wrapOpaqueRow(row)
                 local statFrames = {}
                 local colWidth = 1 / math.max(#stats, 1)
 
@@ -1767,7 +1754,7 @@ function lib.new(config)
                     local trend = entry:FindFirstChild("trend")
                     if trend then trend.Text = stat.trend or "" end
 
-                    entry.Parent = scContainer
+                    entry.Parent = row
                     statFrames[i] = entry
 
                     if i < #stats then
@@ -1779,11 +1766,15 @@ function lib.new(config)
                         div.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
                         div.BackgroundTransparency = 0.9
                         div.BorderSizePixel = 0
-                        div.Parent = scContainer
+                        div.Parent = row
                     end
                 end
 
+                local oldSep = row:FindFirstChild("sep")
+                if oldSep then oldSep:Destroy() end
                 row.Parent = card
+                elementCount = elementCount + 1
+                addSepSpacer(card, elementCount)
                 updateSeparators()
 
                 return {
