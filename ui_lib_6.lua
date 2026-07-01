@@ -1677,11 +1677,22 @@ function lib.new(config)
 
                 local rowFrames = {}
 
+                local function updateTableSeps()
+                    for i, rf in ipairs(rowFrames) do
+                        local s = rf:FindFirstChild("sep")
+                        if s then s.Visible = (i < #rowFrames) end
+                    end
+                end
+
                 local function addTableRow(data, index)
                     local cell = data_table_cell_template:Clone()
                     cell.Name = "row_" .. index
                     cell.LayoutOrder = index + 1
                     cell.Visible = true
+
+                    -- ponytail: full-width sep to match element width
+                    local cellSep = cell:FindFirstChild("sep")
+                    if cellSep then cellSep.Size = UDim2.new(1, 0, 0, 1) end
 
                     local c1 = cell:FindFirstChild("cell_1")
                     local c2 = cell:FindFirstChild("cell_2")
@@ -1714,6 +1725,7 @@ function lib.new(config)
                 for i, data in ipairs(rows) do
                     addTableRow(data, i)
                 end
+                updateTableSeps()
 
                 -- size wrapper to fit inner table + padding
                 local contentH = 24 + #rows * 26
@@ -1725,6 +1737,7 @@ function lib.new(config)
                 return {
                     addRow = function(_, data)
                         addTableRow(data, #rowFrames + 1)
+                        updateTableSeps()
                         row.Size = UDim2.new(1, 0, 0, 24 + #rowFrames * 26 + 8)
                     end,
                     clear = function()
