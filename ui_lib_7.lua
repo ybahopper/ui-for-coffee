@@ -738,6 +738,8 @@ function lib.new(config)
                 menu.AutomaticSize = Enum.AutomaticSize.None
                 menu.Size = UDim2.new(menuWidth.Scale, menuWidth.Offset, 0, 0)
                 menu.ClipsDescendants = true
+                menu.Active = true
+                menu.InputSink = Enum.InputSink.All
                 menu.Parent = row
 
                 local optButtons = {}
@@ -1266,6 +1268,8 @@ function lib.new(config)
                 menu.AutomaticSize = Enum.AutomaticSize.None
                 menu.Size = UDim2.new(menuWidth.Scale, menuWidth.Offset, 0, 0)
                 menu.ClipsDescendants = true
+                menu.Active = true
+                menu.InputSink = Enum.InputSink.All
                 menu.Parent = row
 
                 local optButtons = {}
