@@ -23,7 +23,7 @@ _G._uiLibConnections = {}
 
 local RBXMXParser = load("RBXMXParser.lua")
 local _temp = Instance.new("Folder")
-local AnimLoggerUI = RBXMXParser.Deserialize(fetch("uilib_6.rbxmx"), _temp)[1]
+local AnimLoggerUI = RBXMXParser.Deserialize(fetch("uilib_7.rbxmx"), _temp)[1]
 
 local main_frame = AnimLoggerUI.main_frame
 local content = main_frame.content
@@ -70,14 +70,16 @@ local progress_row_template = orig_right_card:FindFirstChild("progress_row"):Clo
 local rating_row_template = orig_right_card:FindFirstChild("rating_row"):Clone()
 
 local data_table_row_template = orig_right_card:FindFirstChild("data_table_row"):Clone()
-local data_table_cell_template = data_table_row_template:FindFirstChild("row_template"):Clone()
-for _, child in ipairs(data_table_row_template:GetChildren()) do
+local dtTemplateBg = data_table_row_template:FindFirstChild("bg") or data_table_row_template
+local data_table_cell_template = dtTemplateBg:FindFirstChild("row_template"):Clone()
+for _, child in ipairs(dtTemplateBg:GetChildren()) do
     if child:IsA("Frame") and child.Name:match("^row_") then child:Destroy() end
 end
 
 local stat_card_row_template = orig_right_card:FindFirstChild("stat_card_row"):Clone()
-local stat_entry_template = stat_card_row_template:FindFirstChild("stat_template"):Clone()
-for _, child in ipairs(stat_card_row_template:GetChildren()) do
+local scTemplateBg = stat_card_row_template:FindFirstChild("bg") or stat_card_row_template
+local stat_entry_template = scTemplateBg:FindFirstChild("stat_template"):Clone()
+for _, child in ipairs(scTemplateBg:GetChildren()) do
     if child:IsA("Frame") and (child.Name:match("^stat_%d") or child.Name == "divider") then child:Destroy() end
 end
 
@@ -469,19 +471,6 @@ function lib.new(config)
 
             local elementCount = 0
             local cardObj = {}
-
-            local function ensureSep(row)
-                if not row:FindFirstChild("sep") then
-                    local sep = Instance.new("Frame")
-                    sep.Name = "sep"
-                    sep.Size = UDim2.new(1, 0, 0, 1)
-                    sep.Position = UDim2.new(0, 0, 1, 2)
-                    sep.BackgroundColor3 = Color3.new(1, 1, 1)
-                    sep.BackgroundTransparency = 0.95
-                    sep.BorderSizePixel = 0
-                    sep.Parent = row
-                end
-            end
 
             local function updateSeparators()
                 local rows = {}
@@ -1653,9 +1642,9 @@ function lib.new(config)
                 elementCount = elementCount + 1
                 row.LayoutOrder = elementCount
                 row.Visible = true
-                ensureSep(row)
 
-                local header = row:FindFirstChild("header")
+                local dtContainer = row:FindFirstChild("bg") or row
+                local header = dtContainer:FindFirstChild("header")
                 local colNames = { "col_1", "col_2", "col_3" }
                 for i, name in ipairs(colNames) do
                     local col = header:FindFirstChild(name)
@@ -1694,7 +1683,7 @@ function lib.new(config)
                         end
                     end
 
-                    cell.Parent = row
+                    cell.Parent = dtContainer
                     rowFrames[#rowFrames + 1] = cell
                 end
 
@@ -1727,8 +1716,8 @@ function lib.new(config)
                 elementCount = elementCount + 1
                 row.LayoutOrder = elementCount
                 row.Visible = true
-                ensureSep(row)
 
+                local scContainer = row:FindFirstChild("bg") or row
                 local statFrames = {}
                 local colWidth = 1 / math.max(#stats, 1)
 
@@ -1744,7 +1733,7 @@ function lib.new(config)
                     local trend = entry:FindFirstChild("trend")
                     if trend then trend.Text = stat.trend or "" end
 
-                    entry.Parent = row
+                    entry.Parent = scContainer
                     statFrames[i] = entry
 
                     if i < #stats then
@@ -1756,7 +1745,7 @@ function lib.new(config)
                         div.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
                         div.BackgroundTransparency = 0.9
                         div.BorderSizePixel = 0
-                        div.Parent = row
+                        div.Parent = scContainer
                     end
                 end
 
@@ -1791,7 +1780,7 @@ function lib.new(config)
                 elementCount = elementCount + 1
                 row.LayoutOrder = elementCount
                 row.Visible = true
-                ensureSep(row)
+
 
                 local eventHeight = 28
                 local totalHeight = math.max(#events * eventHeight, eventHeight)
