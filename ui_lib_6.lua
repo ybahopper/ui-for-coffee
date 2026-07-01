@@ -1257,16 +1257,39 @@ function lib.new(config)
                 local pickerOpen = false
                 local swatchStroke = swatch:FindFirstChildOfClass("UIStroke")
 
+                local pickerSize = picker.Size
+                local pickerBgT = picker.BackgroundTransparency
+                local pickerStroke = picker:FindFirstChildOfClass("UIStroke")
+                local pickerStrokeT = pickerStroke and pickerStroke.Transparency or 1
+                picker.Active = true
+
                 swatch.MouseButton1Click:Connect(function()
                     pickerOpen = not pickerOpen
                     if pickerOpen then
+                        -- fade + scale in
+                        picker.Size = UDim2.new(pickerSize.X.Scale, pickerSize.X.Offset, 0, 0)
+                        picker.BackgroundTransparency = 1
+                        if pickerStroke then pickerStroke.Transparency = 1 end
                         picker.Visible = true
+                        picker.ClipsDescendants = true
+                        TweenService:Create(picker, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                            Size = pickerSize, BackgroundTransparency = pickerBgT,
+                        }):Play()
+                        if pickerStroke then TweenService:Create(pickerStroke, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Transparency = pickerStrokeT }):Play() end
                         updateVisual()
                         if swatchStroke then
                             TweenService:Create(swatchStroke, TWEEN_INFO, { Color = ACCENT, Transparency = 0 }):Play()
                         end
                     else
-                        picker.Visible = false
+                        local t = TweenService:Create(picker, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                            Size = UDim2.new(pickerSize.X.Scale, pickerSize.X.Offset, 0, 0), BackgroundTransparency = 1,
+                        })
+                        if pickerStroke then TweenService:Create(pickerStroke, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Transparency = 1 }):Play() end
+                        t.Completed:Connect(function()
+                            picker.Visible = false
+                            picker.ClipsDescendants = false
+                        end)
+                        t:Play()
                         if swatchStroke then
                             TweenService:Create(swatchStroke, TWEEN_INFO, { Color = Color3.fromRGB(255,255,255), Transparency = 0.88 }):Play()
                         end
