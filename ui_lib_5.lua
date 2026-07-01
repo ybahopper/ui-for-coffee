@@ -1762,7 +1762,6 @@ function lib.new(config)
                 bg.BackgroundTransparency = 0
                 bg.BorderSizePixel = 0
                 bg.ClipsDescendants = true
-                bg.ZIndex = 0
                 bg.Parent = row
                 local corner = row:FindFirstChildOfClass("UICorner")
                 if corner then corner.Parent = bg end
@@ -1839,7 +1838,7 @@ function lib.new(config)
                 local line = row:FindFirstChild("line")
                 if line then
                     line.Size = UDim2.new(0, 2, 0, #events * eventHeight)
-                    line.Position = UDim2.new(0, 14, 0, eventPad)
+                    line.Position = UDim2.new(line.Position.X.Scale, line.Position.X.Offset, 0, eventPad)
                 end
 
                 local eventFrames = {}
@@ -1878,9 +1877,7 @@ function lib.new(config)
                         evFrame.Parent = row
                         eventFrames[i] = evFrame
                         row.Size = UDim2.new(1, 0, 0, i * eventHeight + eventPad * 2)
-                        if line then
-                            line.Size = UDim2.new(0, 2, 0, i * eventHeight)
-                        end
+                        if line then line.Size = UDim2.new(0, 2, 0, i * eventHeight) end
                     end,
                     clear = function()
                         for _, ef in ipairs(eventFrames) do ef:Destroy() end
