@@ -2080,36 +2080,67 @@ function lib.new(config)
         if search_closed_btn and search_open_frame then
             local searchInput = search_open_frame:FindFirstChild("input")
             local searchClose = search_open_frame:FindFirstChild("close")
+            local searchOpenSize = search_open_frame.Size
+            local searchTween = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 
             search_open_frame.Visible = false
+            search_open_frame.ClipsDescendants = true
+
+            local function showAllColumns()
+                for _, t in ipairs(tabs) do
+                    t._left.Visible = true
+                    t._right.Visible = true
+                end
+            end
+
+            local function restoreActiveColumns()
+                for _, t in ipairs(tabs) do
+                    local isActive = (t == activeTab)
+                    t._left.Visible = isActive
+                    t._right.Visible = isActive
+                end
+            end
+
+            local function resetAllElements()
+                for _, child in ipairs(content:GetDescendants()) do
+                    if child:IsA("GuiObject") and child:FindFirstChild("label") and child:FindFirstChild("sep") then
+                        child.Visible = true
+                    end
+                end
+            end
 
             search_closed_btn.MouseButton1Click:Connect(function()
                 search_closed_btn.Visible = false
+                search_open_frame.Size = UDim2.new(0, 0, searchOpenSize.Y.Scale, searchOpenSize.Y.Offset)
                 search_open_frame.Visible = true
+                TweenService:Create(search_open_frame, searchTween, { Size = searchOpenSize }):Play()
                 if searchInput then searchInput:CaptureFocus() end
             end)
 
             if searchClose then
                 searchClose.MouseButton1Click:Connect(function()
-                    search_open_frame.Visible = false
-                    search_closed_btn.Visible = true
+                    local tween = TweenService:Create(search_open_frame, searchTween, { Size = UDim2.new(0, 0, searchOpenSize.Y.Scale, searchOpenSize.Y.Offset) })
+                    tween.Completed:Connect(function()
+                        search_open_frame.Visible = false
+                        search_closed_btn.Visible = true
+                    end)
+                    tween:Play()
                     if searchInput then searchInput.Text = "" end
-                    for _, child in ipairs(content:GetDescendants()) do
-                        if child:IsA("GuiObject") and child:FindFirstChild("label") and child:FindFirstChild("sep") then
-                            child.Visible = true
-                        end
-                    end
+                    resetAllElements()
+                    restoreActiveColumns()
                 end)
             end
 
             if searchInput then
                 searchInput:GetPropertyChangedSignal("Text"):Connect(function()
                     local query = searchInput.Text:lower()
-                    for _, child in ipairs(content:GetDescendants()) do
-                        if child:IsA("GuiObject") and child:FindFirstChild("label") and child:FindFirstChild("sep") then
-                            if query == "" then
-                                child.Visible = true
-                            else
+                    if query == "" then
+                        resetAllElements()
+                        restoreActiveColumns()
+                    else
+                        showAllColumns()
+                        for _, child in ipairs(content:GetDescendants()) do
+                            if child:IsA("GuiObject") and child:FindFirstChild("label") and child:FindFirstChild("sep") then
                                 child.Visible = child:FindFirstChild("label").Text:lower():find(query, 1, true) ~= nil
                             end
                         end
