@@ -106,6 +106,40 @@ end
 
 local _activeDropdownClose = nil
 
+-- ponytail: wraps opaque rows so sep has breathing room. upgrade if templates get bg natively.
+local function wrapOpaqueRow(row)
+    if row:FindFirstChild("bg") then return row:FindFirstChild("bg") end
+    if row.BackgroundTransparency >= 0.5 then return row end
+    local bg = Instance.new("Frame")
+    bg.Name = "bg"
+    bg.BackgroundColor3 = row.BackgroundColor3
+    bg.BackgroundTransparency = row.BackgroundTransparency
+    bg.BorderSizePixel = 0
+    bg.ClipsDescendants = true
+    if row.AutomaticSize == Enum.AutomaticSize.Y then
+        bg.Size = UDim2.new(1, 0, 0, 0)
+        bg.AutomaticSize = Enum.AutomaticSize.Y
+    else
+        bg.Size = UDim2.new(1, 0, 1, -6)
+    end
+    bg.Position = UDim2.new(0, 0, 0, 0)
+    bg.Parent = row
+    local corner = row:FindFirstChildOfClass("UICorner")
+    if corner then corner.Parent = bg end
+    for _, child in ipairs(row:GetChildren()) do
+        if child ~= bg and child.Name ~= "sep" and child:IsA("GuiObject") then
+            child.Parent = bg
+        elseif child:IsA("UIListLayout") or child:IsA("UIPadding") then
+            child.Parent = bg
+        end
+    end
+    row.BackgroundTransparency = 1
+    row.ClipsDescendants = false
+    local sep = row:FindFirstChild("sep")
+    if sep then sep.LayoutOrder = 999 end
+    return bg
+end
+
 local TweenService = cloneref(game:GetService("TweenService"))
 local UserInputService = cloneref(game:GetService("UserInputService"))
 local TextService = cloneref(game:GetService("TextService"))
@@ -1643,7 +1677,7 @@ function lib.new(config)
                 row.LayoutOrder = elementCount
                 row.Visible = true
 
-                local dtContainer = row:FindFirstChild("bg") or row
+                local dtContainer = wrapOpaqueRow(row)
                 local header = dtContainer:FindFirstChild("header")
                 local colNames = { "col_1", "col_2", "col_3" }
                 for i, name in ipairs(colNames) do
@@ -1717,7 +1751,7 @@ function lib.new(config)
                 row.LayoutOrder = elementCount
                 row.Visible = true
 
-                local scContainer = row:FindFirstChild("bg") or row
+                local scContainer = wrapOpaqueRow(row)
                 local statFrames = {}
                 local colWidth = 1 / math.max(#stats, 1)
 
