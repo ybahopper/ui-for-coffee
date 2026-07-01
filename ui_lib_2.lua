@@ -2016,24 +2016,132 @@ function lib.new(config)
         local search_open_frame = title_bar:FindFirstChild("search_open")
         local minimize_btn = title_bar:FindFirstChild("minimize_btn")
 
-        if minimize_btn then
-            minimize_btn.MouseButton1Click:Connect(function()
-                if isMinimized then return end
-                isMinimized = true
+        -- cache original transparencies for minimize/maximize restore
+        for _, desc in ipairs(main_frame:GetDescendants()) do
+            if (desc:IsA("TextLabel") or desc:IsA("TextButton") or desc:IsA("TextBox")) then
+                desc:SetAttribute("_origTT", desc.TextTransparency)
+            end
+            if desc:IsA("ImageLabel") or desc:IsA("ImageButton") then
+                desc:SetAttribute("_origIT", desc.ImageTransparency)
+            end
+            if desc:IsA("Frame") then
+                desc:SetAttribute("_origBgT", desc.BackgroundTransparency)
+            end
+            if desc:IsA("UIStroke") then
+                desc:SetAttribute("_origStrokeT", desc.Transparency)
+            end
+            if desc:IsA("ScrollingFrame") then
+                desc:SetAttribute("_origScrollT", desc.ScrollBarImageTransparency)
+            end
+        end
+        local minTi = TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+        local mainOrigSize = main_frame.Size
+        local mainOrigPos = main_frame.Position
+        local mainOrigBgT = main_frame.BackgroundTransparency
+        local barOrigPos = minimized_bar_ref and minimized_bar_ref.Position
+        local barOrigBgT = minimized_bar_ref and minimized_bar_ref.BackgroundTransparency
+        local minAnimating = false
+
+        local function animateMinimize()
+            if isMinimized or minAnimating then return end
+            isMinimized = true
+            minAnimating = true
+            -- shrink + fade main frame
+            local t1 = TweenService:Create(main_frame, minTi, { BackgroundTransparency = 1 })
+            for _, desc in ipairs(main_frame:GetDescendants()) do
+                if desc:IsA("TextLabel") or desc:IsA("TextButton") or desc:IsA("TextBox") then
+                    TweenService:Create(desc, minTi, { TextTransparency = 1 }):Play()
+                elseif desc:IsA("ImageLabel") or desc:IsA("ImageButton") then
+                    TweenService:Create(desc, minTi, { ImageTransparency = 1 }):Play()
+                elseif desc:IsA("Frame") and desc.BackgroundTransparency < 1 then
+                    TweenService:Create(desc, minTi, { BackgroundTransparency = 1 }):Play()
+                elseif desc:IsA("UIStroke") then
+                    TweenService:Create(desc, minTi, { Transparency = 1 }):Play()
+                elseif desc:IsA("ScrollingFrame") then
+                    TweenService:Create(desc, minTi, { ScrollBarImageTransparency = 1 }):Play()
+                end
+            end
+            t1.Completed:Connect(function()
                 main_frame.Visible = false
+                -- show bar with fade + slide in
+                minimized_bar_ref.Position = UDim2.new(barOrigPos.X.Scale, barOrigPos.X.Offset, barOrigPos.Y.Scale, barOrigPos.Y.Offset - 12)
+                minimized_bar_ref.BackgroundTransparency = 1
+                for _, desc in ipairs(minimized_bar_ref:GetDescendants()) do
+                    if desc:IsA("TextLabel") or desc:IsA("TextButton") then
+                        desc.TextTransparency = 1
+                    elseif desc:IsA("ImageLabel") or desc:IsA("ImageButton") then
+                        desc.ImageTransparency = 1
+                    elseif desc:IsA("Frame") and desc.Name ~= "notif_badge" then
+                        desc.BackgroundTransparency = 1
+                    elseif desc:IsA("UIStroke") then
+                        desc.Transparency = 1
+                    end
+                end
                 minimized_bar_ref.Visible = true
+                TweenService:Create(minimized_bar_ref, minTi, { Position = barOrigPos, BackgroundTransparency = barOrigBgT }):Play()
+                for _, desc in ipairs(minimized_bar_ref:GetDescendants()) do
+                    if desc:IsA("TextLabel") or desc:IsA("TextButton") then
+                        TweenService:Create(desc, minTi, { TextTransparency = 0 }):Play()
+                    elseif desc:IsA("ImageLabel") or desc:IsA("ImageButton") then
+                        TweenService:Create(desc, minTi, { ImageTransparency = 0 }):Play()
+                    elseif desc:IsA("UIStroke") then
+                        TweenService:Create(desc, minTi, { Transparency = 0.6 }):Play()
+                    end
+                end
+                minAnimating = false
             end)
+            t1:Play()
+        end
+
+        local function animateMaximize()
+            if not isMinimized or minAnimating then return end
+            isMinimized = false
+            minAnimating = true
+            -- fade out bar
+            local t1 = TweenService:Create(minimized_bar_ref, minTi, { BackgroundTransparency = 1, Position = UDim2.new(barOrigPos.X.Scale, barOrigPos.X.Offset, barOrigPos.Y.Scale, barOrigPos.Y.Offset - 12) })
+            for _, desc in ipairs(minimized_bar_ref:GetDescendants()) do
+                if desc:IsA("TextLabel") or desc:IsA("TextButton") then
+                    TweenService:Create(desc, minTi, { TextTransparency = 1 }):Play()
+                elseif desc:IsA("ImageLabel") or desc:IsA("ImageButton") then
+                    TweenService:Create(desc, minTi, { ImageTransparency = 1 }):Play()
+                elseif desc:IsA("UIStroke") then
+                    TweenService:Create(desc, minTi, { Transparency = 1 }):Play()
+                end
+            end
+            t1.Completed:Connect(function()
+                minimized_bar_ref.Visible = false
+                minimized_bar_ref.Position = barOrigPos
+                minimized_bar_ref.BackgroundTransparency = barOrigBgT
+                -- restore + fade in main frame
+                main_frame.BackgroundTransparency = 1
+                main_frame.Visible = true
+                TweenService:Create(main_frame, minTi, { BackgroundTransparency = mainOrigBgT }):Play()
+                for _, desc in ipairs(main_frame:GetDescendants()) do
+                    if desc:IsA("TextLabel") or desc:IsA("TextButton") or desc:IsA("TextBox") then
+                        TweenService:Create(desc, minTi, { TextTransparency = desc:GetAttribute("_origTT") or 0 }):Play()
+                    elseif desc:IsA("ImageLabel") or desc:IsA("ImageButton") then
+                        TweenService:Create(desc, minTi, { ImageTransparency = desc:GetAttribute("_origIT") or 0 }):Play()
+                    elseif desc:IsA("Frame") then
+                        TweenService:Create(desc, minTi, { BackgroundTransparency = desc:GetAttribute("_origBgT") or 0 }):Play()
+                    elseif desc:IsA("UIStroke") then
+                        TweenService:Create(desc, minTi, { Transparency = desc:GetAttribute("_origStrokeT") or 0 }):Play()
+                    elseif desc:IsA("ScrollingFrame") then
+                        TweenService:Create(desc, minTi, { ScrollBarImageTransparency = desc:GetAttribute("_origScrollT") or 0 }):Play()
+                    end
+                end
+                minAnimating = false
+            end)
+            t1:Play()
+        end
+
+        if minimize_btn then
+            minimize_btn.MouseButton1Click:Connect(animateMinimize)
         end
 
         if minimized_bar_ref then
             local maxBtn = minimized_bar_ref:FindFirstChild("maximize_btn")
             if maxBtn then
-                maxBtn.MouseButton1Click:Connect(function()
-                    if not isMinimized then return end
-                    isMinimized = false
-                    minimized_bar_ref.Visible = false
-                    main_frame.Visible = true
-                end)
+                maxBtn.MouseButton1Click:Connect(animateMaximize)
             end
 
             local barDragging = false
@@ -2061,21 +2169,8 @@ function lib.new(config)
             table.insert(_G._uiLibConnections, barDragConn)
         end
 
-        function window:minimize()
-            if not isMinimized and minimize_btn then
-                isMinimized = true
-                main_frame.Visible = false
-                minimized_bar_ref.Visible = true
-            end
-        end
-
-        function window:maximize()
-            if isMinimized then
-                isMinimized = false
-                minimized_bar_ref.Visible = false
-                main_frame.Visible = true
-            end
-        end
+        function window:minimize() animateMinimize() end
+        function window:maximize() animateMaximize() end
 
         if search_closed_btn and search_open_frame then
             local searchInput = search_open_frame:FindFirstChild("input")
