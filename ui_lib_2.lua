@@ -104,26 +104,6 @@ end
 
 local _activeDropdownClose = nil
 
--- ponytail: adds a transparent spacer with sep after opaque rows. replaces broken in-row sep.
-local function addSepSpacer(card, layoutOrder)
-    local spacer = Instance.new("Frame")
-    spacer.Name = "sep_spacer"
-    spacer.Size = UDim2.new(1, 0, 0, 6)
-    spacer.BackgroundTransparency = 1
-    spacer.BorderSizePixel = 0
-    spacer.LayoutOrder = layoutOrder
-    spacer.Parent = card
-    local sep = Instance.new("Frame")
-    sep.Name = "sep"
-    sep.Size = UDim2.new(1, 0, 0, 1)
-    sep.Position = UDim2.new(0, 0, 0.5, 0)
-    sep.AnchorPoint = Vector2.new(0, 0.5)
-    sep.BackgroundColor3 = Color3.new(1, 1, 1)
-    sep.BackgroundTransparency = 0.95
-    sep.BorderSizePixel = 0
-    sep.Parent = spacer
-    return spacer
-end
 
 local TweenService = cloneref(game:GetService("TweenService"))
 local UserInputService = cloneref(game:GetService("UserInputService"))
@@ -466,6 +446,8 @@ function lib.new(config)
             local column = (side == "right") and right or left
 
             local card = card_template:Clone()
+            local cardLayout = card:FindFirstChildOfClass("UIListLayout")
+            if cardLayout then cardLayout.Padding = UDim.new(0, 1) end
 
             if cardConfig.name then
                 local header = section_header_template:Clone()
@@ -1662,11 +1644,6 @@ function lib.new(config)
                 row.LayoutOrder = elementCount
                 row.Visible = true
 
-                -- add bottom padding so content doesn't touch the edge
-                local pad = row:FindFirstChild("UIPadding") or Instance.new("UIPadding")
-                pad.PaddingBottom = UDim.new(0, 6)
-                pad.Parent = row
-
                 local header = row:FindFirstChild("header")
                 local colNames = { "col_1", "col_2", "col_3" }
                 for i, name in ipairs(colNames) do
@@ -1714,11 +1691,7 @@ function lib.new(config)
                     addTableRow(data, i)
                 end
 
-                local oldSep = row:FindFirstChild("sep")
-                if oldSep then oldSep:Destroy() end
                 row.Parent = card
-                elementCount = elementCount + 1
-                addSepSpacer(card, elementCount)
                 updateSeparators()
 
                 return {
@@ -1743,7 +1716,6 @@ function lib.new(config)
                 elementCount = elementCount + 1
                 row.LayoutOrder = elementCount
                 row.Visible = true
-                row.Size = UDim2.new(1, 0, 0, row.Size.Y.Offset + 6)
 
                 local statFrames = {}
                 local colWidth = 1 / math.max(#stats, 1)
@@ -1752,7 +1724,7 @@ function lib.new(config)
                     local entry = stat_entry_template:Clone()
                     entry.Name = "stat_" .. i
                     entry.Visible = true
-                    entry.Size = UDim2.new(colWidth, 0, 1, -6)
+                    entry.Size = UDim2.new(colWidth, 0, 1, 0)
                     entry.Position = UDim2.new((i - 1) * colWidth, 0, 0, 0)
 
                     entry:FindFirstChild("label").Text = stat.label or ""
@@ -1776,11 +1748,7 @@ function lib.new(config)
                     end
                 end
 
-                local oldSep = row:FindFirstChild("sep")
-                if oldSep then oldSep:Destroy() end
                 row.Parent = card
-                elementCount = elementCount + 1
-                addSepSpacer(card, elementCount)
                 updateSeparators()
 
                 return {
@@ -1814,7 +1782,7 @@ function lib.new(config)
 
 
                 local eventHeight = 28
-                local totalHeight = math.max(#events * eventHeight, eventHeight) + 6
+                local totalHeight = math.max(#events * eventHeight, eventHeight)
                 row.Size = UDim2.new(1, 0, 0, totalHeight)
 
                 local line = row:FindFirstChild("line")
