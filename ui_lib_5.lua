@@ -2130,6 +2130,19 @@ function lib.new(config)
         end)
     end
 
+    -- ponytail: static snapshot taken once, modal children don't change
+    local modalTi = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    local modalSnap = {}
+    local backdropTarget = modal_backdrop.BackgroundTransparency
+    for _, d in ipairs(modal_frame:GetDescendants()) do
+        local props = {}
+        if d:IsA("GuiObject") then props.BackgroundTransparency = d.BackgroundTransparency end
+        if d:IsA("TextLabel") or d:IsA("TextButton") or d:IsA("TextBox") then props.TextTransparency = d.TextTransparency end
+        if d:IsA("ImageLabel") or d:IsA("ImageButton") then props.ImageTransparency = d.ImageTransparency end
+        if d:IsA("UIStroke") then props.Transparency = d.Transparency end
+        if next(props) then modalSnap[d] = props end
+    end
+
     function window:showModal(modalConfig)
         modalConfig = modalConfig or {}
 
@@ -2146,27 +2159,13 @@ function lib.new(config)
         if confirmBtn then confirmBtn.Text = modalConfig.confirmText or "Confirm" end
         if cancelBtn then cancelBtn.Text = modalConfig.cancelText or "Cancel" end
 
-        -- snapshot modal child transparencies
-        local modalTi = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-        local modalSnap = {}
-        for _, d in ipairs(modal_frame:GetDescendants()) do
-            local props = {}
-            if d:IsA("GuiObject") then props.BackgroundTransparency = d.BackgroundTransparency end
-            if d:IsA("TextLabel") or d:IsA("TextButton") or d:IsA("TextBox") then props.TextTransparency = d.TextTransparency end
-            if d:IsA("ImageLabel") or d:IsA("ImageButton") then props.ImageTransparency = d.ImageTransparency end
-            if d:IsA("UIStroke") then props.Transparency = d.Transparency end
-            if next(props) then
-                modalSnap[d] = props
-                -- set invisible
-                if props.BackgroundTransparency then d.BackgroundTransparency = 1 end
-                if props.TextTransparency then d.TextTransparency = 1 end
-                if props.ImageTransparency then d.ImageTransparency = 1 end
-                if props.Transparency then d.Transparency = 1 end
-            end
+        -- set invisible from snapshot
+        for d, props in pairs(modalSnap) do
+            if props.BackgroundTransparency then d.BackgroundTransparency = 1 end
+            if props.TextTransparency then d.TextTransparency = 1 end
+            if props.ImageTransparency then d.ImageTransparency = 1 end
+            if props.Transparency then d.Transparency = 1 end
         end
-
-        -- backdrop starts transparent
-        local backdropTarget = modal_backdrop.BackgroundTransparency
         modal_backdrop.BackgroundTransparency = 1
 
         modal_frame.Visible = true
@@ -2197,10 +2196,6 @@ function lib.new(config)
             task.delay(0.2, function()
                 modal_frame.Visible = false
                 modal_backdrop.Visible = false
-                -- restore snapshot so next open can re-snapshot correctly
-                for d, props in pairs(modalSnap) do
-                    for k, v in pairs(props) do d[k] = v end
-                end
                 for _, c in ipairs(conns) do c:Disconnect() end
                 if modalConfig.callback then modalConfig.callback(result) end
             end)
