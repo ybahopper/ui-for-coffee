@@ -23,7 +23,7 @@ _G._uiLibConnections = {}
 
 local RBXMXParser = load("RBXMXParser.lua")
 local _temp = Instance.new("Folder")
-local AnimLoggerUI = RBXMXParser.Deserialize(fetch("uilib_3.rbxmx"), _temp)[1]
+local AnimLoggerUI = RBXMXParser.Deserialize(fetch("uilib_4.rbxmx"), _temp)[1]
 
 local main_frame = AnimLoggerUI.main_frame
 local content = main_frame.content
@@ -1649,11 +1649,24 @@ function lib.new(config)
                 local columns = dtConfig.columns or { "Col 1", "Col 2", "Col 3" }
                 local rows = dtConfig.rows or {}
 
-                local row = data_table_row_template:Clone()
+                local rowOuter = Instance.new("Frame")
+                rowOuter.Name = "data_table_outer"
+                rowOuter.BackgroundTransparency = 1
+                rowOuter.Size = UDim2.new(1, 0, 0, 0)
+                rowOuter.AutomaticSize = Enum.AutomaticSize.Y
                 elementCount = elementCount + 1
-                row.LayoutOrder = elementCount
+                rowOuter.LayoutOrder = elementCount
+                rowOuter.Visible = true
+                ensureSep(rowOuter)
+
+                local outerPad = Instance.new("UIPadding")
+                outerPad.PaddingTop = UDim.new(0, 4)
+                outerPad.PaddingBottom = UDim.new(0, 4)
+                outerPad.Parent = rowOuter
+
+                local row = data_table_row_template:Clone()
                 row.Visible = true
-                ensureSep(row)
+                row.Parent = rowOuter
 
                 local header = row:FindFirstChild("header")
                 local colNames = { "col_1", "col_2", "col_3" }
@@ -1702,7 +1715,7 @@ function lib.new(config)
                     addTableRow(data, i)
                 end
 
-                row.Parent = card
+                rowOuter.Parent = card
                 updateSeparators()
 
                 return {
@@ -1723,11 +1736,24 @@ function lib.new(config)
                 scConfig = scConfig or {}
                 local stats = scConfig.stats or {}
 
-                local row = stat_card_row_template:Clone()
+                local rowOuter = Instance.new("Frame")
+                rowOuter.Name = "stat_card_outer"
+                rowOuter.BackgroundTransparency = 1
+                rowOuter.Size = UDim2.new(1, 0, 0, 0)
+                rowOuter.AutomaticSize = Enum.AutomaticSize.Y
                 elementCount = elementCount + 1
-                row.LayoutOrder = elementCount
+                rowOuter.LayoutOrder = elementCount
+                rowOuter.Visible = true
+                ensureSep(rowOuter)
+
+                local outerPad = Instance.new("UIPadding")
+                outerPad.PaddingTop = UDim.new(0, 4)
+                outerPad.PaddingBottom = UDim.new(0, 4)
+                outerPad.Parent = rowOuter
+
+                local row = stat_card_row_template:Clone()
                 row.Visible = true
-                ensureSep(row)
+                row.Parent = rowOuter
 
                 local statFrames = {}
                 local colWidth = 1 / math.max(#stats, 1)
@@ -1760,7 +1786,7 @@ function lib.new(config)
                     end
                 end
 
-                row.Parent = card
+                rowOuter.Parent = card
                 updateSeparators()
 
                 return {
@@ -1787,11 +1813,24 @@ function lib.new(config)
                 tlConfig = tlConfig or {}
                 local events = tlConfig.events or {}
 
-                local row = timeline_row_template:Clone()
+                local rowOuter = Instance.new("Frame")
+                rowOuter.Name = "timeline_outer"
+                rowOuter.BackgroundTransparency = 1
+                rowOuter.Size = UDim2.new(1, 0, 0, 0)
+                rowOuter.AutomaticSize = Enum.AutomaticSize.Y
                 elementCount = elementCount + 1
-                row.LayoutOrder = elementCount
+                rowOuter.LayoutOrder = elementCount
+                rowOuter.Visible = true
+                ensureSep(rowOuter)
+
+                local outerPad = Instance.new("UIPadding")
+                outerPad.PaddingTop = UDim.new(0, 4)
+                outerPad.PaddingBottom = UDim.new(0, 4)
+                outerPad.Parent = rowOuter
+
+                local row = timeline_row_template:Clone()
                 row.Visible = true
-                ensureSep(row)
+                row.Parent = rowOuter
 
                 local eventHeight = 28
                 local totalHeight = math.max(#events * eventHeight, eventHeight)
@@ -1819,7 +1858,7 @@ function lib.new(config)
                     eventFrames[i] = evFrame
                 end
 
-                row.Parent = card
+                rowOuter.Parent = card
                 updateSeparators()
 
                 return {
