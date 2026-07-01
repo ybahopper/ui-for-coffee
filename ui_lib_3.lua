@@ -2016,25 +2016,8 @@ function lib.new(config)
         local search_open_frame = title_bar:FindFirstChild("search_open")
         local minimize_btn = title_bar:FindFirstChild("minimize_btn")
 
-        -- cache original transparencies for minimize/maximize restore
-        for _, desc in ipairs(main_frame:GetDescendants()) do
-            if (desc:IsA("TextLabel") or desc:IsA("TextButton") or desc:IsA("TextBox")) then
-                desc:SetAttribute("_origTT", desc.TextTransparency)
-            end
-            if desc:IsA("ImageLabel") or desc:IsA("ImageButton") then
-                desc:SetAttribute("_origIT", desc.ImageTransparency)
-            end
-            if desc:IsA("Frame") then
-                desc:SetAttribute("_origBgT", desc.BackgroundTransparency)
-            end
-            if desc:IsA("UIStroke") then
-                desc:SetAttribute("_origStrokeT", desc.Transparency)
-            end
-            if desc:IsA("ScrollingFrame") then
-                desc:SetAttribute("_origScrollT", desc.ScrollBarImageTransparency)
-            end
-        end
         local minTi = TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+        local mainSnapshot = {} -- captured at minimize time, restored at maximize time
         local mainOrigSize = main_frame.Size
         local mainOrigPos = main_frame.Position
         local mainOrigBgT = main_frame.BackgroundTransparency
@@ -2046,21 +2029,30 @@ function lib.new(config)
             if isMinimized or minAnimating then return end
             isMinimized = true
             minAnimating = true
-            -- shrink + fade main frame
-            local t1 = TweenService:Create(main_frame, minTi, { BackgroundTransparency = 1 })
+            -- snapshot current transparencies then fade out
+            mainSnapshot = {}
+            mainSnapshot[main_frame] = { bg = main_frame.BackgroundTransparency }
             for _, desc in ipairs(main_frame:GetDescendants()) do
                 if desc:IsA("TextLabel") or desc:IsA("TextButton") or desc:IsA("TextBox") then
+                    mainSnapshot[desc] = { tt = desc.TextTransparency }
                     TweenService:Create(desc, minTi, { TextTransparency = 1 }):Play()
                 elseif desc:IsA("ImageLabel") or desc:IsA("ImageButton") then
+                    mainSnapshot[desc] = { it = desc.ImageTransparency }
                     TweenService:Create(desc, minTi, { ImageTransparency = 1 }):Play()
-                elseif desc:IsA("Frame") and desc.BackgroundTransparency < 1 then
-                    TweenService:Create(desc, minTi, { BackgroundTransparency = 1 }):Play()
+                elseif desc:IsA("Frame") then
+                    mainSnapshot[desc] = { bg = desc.BackgroundTransparency }
+                    if desc.BackgroundTransparency < 1 then
+                        TweenService:Create(desc, minTi, { BackgroundTransparency = 1 }):Play()
+                    end
                 elseif desc:IsA("UIStroke") then
+                    mainSnapshot[desc] = { st = desc.Transparency }
                     TweenService:Create(desc, minTi, { Transparency = 1 }):Play()
                 elseif desc:IsA("ScrollingFrame") then
+                    mainSnapshot[desc] = { sc = desc.ScrollBarImageTransparency }
                     TweenService:Create(desc, minTi, { ScrollBarImageTransparency = 1 }):Play()
                 end
             end
+            local t1 = TweenService:Create(main_frame, minTi, { BackgroundTransparency = 1 })
             t1.Completed:Connect(function()
                 main_frame.Visible = false
                 -- show bar with fade + slide in
@@ -2113,20 +2105,22 @@ function lib.new(config)
                 minimized_bar_ref.Position = barOrigPos
                 minimized_bar_ref.BackgroundTransparency = barOrigBgT
                 -- restore + fade in main frame
-                main_frame.BackgroundTransparency = 1
                 main_frame.Visible = true
-                TweenService:Create(main_frame, minTi, { BackgroundTransparency = mainOrigBgT }):Play()
+                local s = mainSnapshot[main_frame]
+                TweenService:Create(main_frame, minTi, { BackgroundTransparency = s and s.bg or mainOrigBgT }):Play()
                 for _, desc in ipairs(main_frame:GetDescendants()) do
-                    if desc:IsA("TextLabel") or desc:IsA("TextButton") or desc:IsA("TextBox") then
-                        TweenService:Create(desc, minTi, { TextTransparency = desc:GetAttribute("_origTT") or 0 }):Play()
-                    elseif desc:IsA("ImageLabel") or desc:IsA("ImageButton") then
-                        TweenService:Create(desc, minTi, { ImageTransparency = desc:GetAttribute("_origIT") or 0 }):Play()
-                    elseif desc:IsA("Frame") then
-                        TweenService:Create(desc, minTi, { BackgroundTransparency = desc:GetAttribute("_origBgT") or 0 }):Play()
-                    elseif desc:IsA("UIStroke") then
-                        TweenService:Create(desc, minTi, { Transparency = desc:GetAttribute("_origStrokeT") or 0 }):Play()
-                    elseif desc:IsA("ScrollingFrame") then
-                        TweenService:Create(desc, minTi, { ScrollBarImageTransparency = desc:GetAttribute("_origScrollT") or 0 }):Play()
+                    local snap = mainSnapshot[desc]
+                    if not snap then -- skip unknown descendants
+                    elseif snap.tt then
+                        TweenService:Create(desc, minTi, { TextTransparency = snap.tt }):Play()
+                    elseif snap.it then
+                        TweenService:Create(desc, minTi, { ImageTransparency = snap.it }):Play()
+                    elseif snap.bg then
+                        TweenService:Create(desc, minTi, { BackgroundTransparency = snap.bg }):Play()
+                    elseif snap.st then
+                        TweenService:Create(desc, minTi, { Transparency = snap.st }):Play()
+                    elseif snap.sc then
+                        TweenService:Create(desc, minTi, { ScrollBarImageTransparency = snap.sc }):Play()
                     end
                 end
                 minAnimating = false
