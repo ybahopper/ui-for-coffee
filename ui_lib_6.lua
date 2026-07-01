@@ -733,9 +733,10 @@ function lib.new(config)
                 valueLabel.Text = selected
 
                 local menu = dropdown_menu_template:Clone()
+                local menuWidth = menu.Size.X
                 menu.Visible = false
                 menu.AutomaticSize = Enum.AutomaticSize.None
-                menu.Size = UDim2.new(0, 134, 0, 0)
+                menu.Size = UDim2.new(menuWidth.Scale, menuWidth.Offset, 0, 0)
                 menu.ClipsDescendants = true
                 menu.Parent = row
 
@@ -749,10 +750,6 @@ function lib.new(config)
                         }):Play()
                     end
                 end
-
-                local optHeight = 26
-                local padding = 8
-                local fullHeight = #options * optHeight + padding
 
                 local isOpen = false
                 local OPEN_TWEEN = TweenInfo.new(0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
@@ -801,6 +798,11 @@ function lib.new(config)
 
                 updateSelection()
 
+                local menuLayout = menu:FindFirstChildOfClass("UIListLayout")
+                local menuPadding = menu:FindFirstChildOfClass("UIPadding")
+                local fullHeight = menuLayout.AbsoluteContentSize.Y
+                    + (menuPadding and (menuPadding.PaddingTop.Offset + menuPadding.PaddingBottom.Offset) or 0)
+
                 local function animateOptions(opening)
                     for _, ob in ipairs(optButtons) do
                         local delay = (ob.index - 1) * OPT_STAGGER
@@ -832,7 +834,7 @@ function lib.new(config)
                         }):Play()
                     end
                     local tween = TweenService:Create(menu, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
-                        Size = UDim2.new(0, 134, 0, 0)
+                        Size = UDim2.new(menuWidth.Scale, menuWidth.Offset, 0, 0)
                     })
                     tween:Play()
                     tween.Completed:Connect(function()
@@ -856,7 +858,7 @@ function lib.new(config)
                         local menuStroke = menu:FindFirstChildOfClass("UIStroke")
                         if menuStroke then menuStroke.Transparency = 0.88 end
                         TweenService:Create(menu, OPEN_TWEEN, {
-                            Size = UDim2.new(0, 134, 0, fullHeight)
+                            Size = UDim2.new(menuWidth.Scale, menuWidth.Offset, 0, fullHeight)
                         }):Play()
                         TweenService:Create(chevron, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
                             Rotation = 0, TextColor3 = accentColor,
@@ -1259,16 +1261,14 @@ function lib.new(config)
                 updateValueText()
 
                 local menu = dropdown_menu_template:Clone()
+                local menuWidth = menu.Size.X
                 menu.Visible = false
                 menu.AutomaticSize = Enum.AutomaticSize.None
-                menu.Size = UDim2.new(0, 134, 0, 0)
+                menu.Size = UDim2.new(menuWidth.Scale, menuWidth.Offset, 0, 0)
                 menu.ClipsDescendants = true
                 menu.Parent = row
 
                 local optButtons = {}
-                local optHeight = 26
-                local padding = 8
-                local fullHeight = #options * optHeight + padding
 
                 local function updateOptStyles()
                     for _, ob in ipairs(optButtons) do
@@ -1312,6 +1312,11 @@ function lib.new(config)
                     end)
                 end
 
+                local menuLayout = menu:FindFirstChildOfClass("UIListLayout")
+                local menuPadding = menu:FindFirstChildOfClass("UIPadding")
+                local fullHeight = menuLayout.AbsoluteContentSize.Y
+                    + (menuPadding and (menuPadding.PaddingTop.Offset + menuPadding.PaddingBottom.Offset) or 0)
+
                 local isOpen = false
                 local OPEN_TWEEN = TweenInfo.new(0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
                 local btnStroke = btn:FindFirstChildOfClass("UIStroke")
@@ -1322,7 +1327,7 @@ function lib.new(config)
                     local menuStroke = menu:FindFirstChildOfClass("UIStroke")
                     TweenService:Create(menu, TweenInfo.new(0.2, Enum.EasingStyle.Quint), { BackgroundTransparency = 1 }):Play()
                     if menuStroke then TweenService:Create(menuStroke, TweenInfo.new(0.2, Enum.EasingStyle.Quint), { Transparency = 1 }):Play() end
-                    local tween = TweenService:Create(menu, TweenInfo.new(0.25, Enum.EasingStyle.Quint), { Size = UDim2.new(0, 134, 0, 0) })
+                    local tween = TweenService:Create(menu, TweenInfo.new(0.25, Enum.EasingStyle.Quint), { Size = UDim2.new(menuWidth.Scale, menuWidth.Offset, 0, 0) })
                     tween:Play()
                     tween.Completed:Connect(function() if not isOpen then menu.Visible = false end end)
                     TweenService:Create(chevron, TweenInfo.new(0.3, Enum.EasingStyle.Quint), { Rotation = 90, TextColor3 = defaultChevronColor }):Play()
@@ -1339,7 +1344,7 @@ function lib.new(config)
                         menu.BackgroundTransparency = 0
                         local menuStroke = menu:FindFirstChildOfClass("UIStroke")
                         if menuStroke then menuStroke.Transparency = 0.88 end
-                        TweenService:Create(menu, OPEN_TWEEN, { Size = UDim2.new(0, 134, 0, fullHeight) }):Play()
+                        TweenService:Create(menu, OPEN_TWEEN, { Size = UDim2.new(menuWidth.Scale, menuWidth.Offset, 0, fullHeight) }):Play()
                         TweenService:Create(chevron, TweenInfo.new(0.3, Enum.EasingStyle.Quint), { Rotation = 0, TextColor3 = ACCENT }):Play()
                         if btnStroke then TweenService:Create(btnStroke, TweenInfo.new(0.25, Enum.EasingStyle.Quint), { Color = ACCENT, Transparency = 0.3 }):Play() end
                         for _, ob in ipairs(optButtons) do
