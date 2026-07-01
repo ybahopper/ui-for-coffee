@@ -1814,7 +1814,7 @@
 					<Content name="BottomImage"><url>rbxasset://textures/ui/Scroll/scroll-bottom.png</url></Content>
 					<Vector2 name="CanvasPosition">
 						<X>0</X>
-						<Y>0</Y>
+						<Y>281</Y>
 					</Vector2>
 					<UDim2 name="CanvasSize">
 						<XS>0</XS>
