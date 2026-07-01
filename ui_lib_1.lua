@@ -1662,6 +1662,11 @@ function lib.new(config)
                 row.LayoutOrder = elementCount
                 row.Visible = true
 
+                -- add bottom padding so content doesn't touch the edge
+                local pad = row:FindFirstChild("UIPadding") or Instance.new("UIPadding")
+                pad.PaddingBottom = UDim.new(0, 6)
+                pad.Parent = row
+
                 local header = row:FindFirstChild("header")
                 local colNames = { "col_1", "col_2", "col_3" }
                 for i, name in ipairs(colNames) do
@@ -1738,6 +1743,7 @@ function lib.new(config)
                 elementCount = elementCount + 1
                 row.LayoutOrder = elementCount
                 row.Visible = true
+                row.Size = UDim2.new(1, 0, 0, row.Size.Y.Offset + 6)
 
                 local statFrames = {}
                 local colWidth = 1 / math.max(#stats, 1)
@@ -1746,7 +1752,7 @@ function lib.new(config)
                     local entry = stat_entry_template:Clone()
                     entry.Name = "stat_" .. i
                     entry.Visible = true
-                    entry.Size = UDim2.new(colWidth, 0, 1, 0)
+                    entry.Size = UDim2.new(colWidth, 0, 1, -6)
                     entry.Position = UDim2.new((i - 1) * colWidth, 0, 0, 0)
 
                     entry:FindFirstChild("label").Text = stat.label or ""
@@ -1808,7 +1814,7 @@ function lib.new(config)
 
 
                 local eventHeight = 28
-                local totalHeight = math.max(#events * eventHeight, eventHeight)
+                local totalHeight = math.max(#events * eventHeight, eventHeight) + 6
                 row.Size = UDim2.new(1, 0, 0, totalHeight)
 
                 local line = row:FindFirstChild("line")
