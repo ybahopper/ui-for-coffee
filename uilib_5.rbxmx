@@ -2169,7 +2169,7 @@
 								<token name="ItemLineAlignment">0</token>
 								<UDim name="Padding">
 									<S>0</S>
-									<O>0</O>
+									<O>4</O>
 								</UDim>
 								<token name="VerticalFlex">0</token>
 								<bool name="Wraps">false</bool>
@@ -11868,7 +11868,7 @@
 								<token name="ItemLineAlignment">0</token>
 								<UDim name="Padding">
 									<S>0</S>
-									<O>0</O>
+									<O>4</O>
 								</UDim>
 								<token name="VerticalFlex">0</token>
 								<bool name="Wraps">false</bool>
