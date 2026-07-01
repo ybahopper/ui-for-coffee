@@ -23,7 +23,7 @@ _G._uiLibConnections = {}
 
 local RBXMXParser = load("RBXMXParser.lua")
 local _temp = Instance.new("Folder")
-local AnimLoggerUI = RBXMXParser.Deserialize(fetch("uilib_7.rbxmx"), _temp)[1]
+local AnimLoggerUI = RBXMXParser.Deserialize(fetch("uilib_8.rbxmx"), _temp)[1]
 
 local main_frame = AnimLoggerUI.main_frame
 local content = main_frame.content
