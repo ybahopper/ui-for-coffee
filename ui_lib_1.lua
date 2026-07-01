@@ -96,7 +96,7 @@ local notifications_container = AnimLoggerUI:FindFirstChild("notifications")
 -- ponytail: reparent notifications into main_frame so they move with the panel
 notifications_container.Parent = main_frame
 notifications_container.AnchorPoint = Vector2.new(1, 0)
-notifications_container.Position = UDim2.new(1, 8, 0, 0)
+notifications_container.Position = UDim2.new(1, notifications_container.Size.X.Offset + 8, 0, 0)
 local modal_frame = main_frame:FindFirstChild("modal")
 local modal_backdrop = main_frame:FindFirstChild("modal_backdrop")
 local tooltip_frame = main_frame:FindFirstChild("tooltip")
