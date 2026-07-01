@@ -2092,21 +2092,6 @@ function lib.new(config)
             local searchBarIcon = search_open_frame:FindFirstChild("icon")
             local searchBarClose = search_open_frame:FindFirstChild("close")
 
-            local function showAllColumns()
-                for _, t in ipairs(tabs) do
-                    t._left.Visible = true
-                    t._right.Visible = true
-                end
-            end
-
-            local function restoreActiveColumns()
-                for _, t in ipairs(tabs) do
-                    local isActive = (t == activeTab)
-                    t._left.Visible = isActive
-                    t._right.Visible = isActive
-                end
-            end
-
             local function resetAllElements()
                 for _, child in ipairs(content:GetDescendants()) do
                     if child:IsA("GuiObject") and child:FindFirstChild("label") and child:FindFirstChild("sep") then
@@ -2153,7 +2138,6 @@ function lib.new(config)
                     tween:Play()
                     if searchInput then searchInput.Text = "" end
                     resetAllElements()
-                    restoreActiveColumns()
                 end)
             end
 
@@ -2162,9 +2146,7 @@ function lib.new(config)
                     local query = searchInput.Text:lower()
                     if query == "" then
                         resetAllElements()
-                        restoreActiveColumns()
                     else
-                        showAllColumns()
                         for _, child in ipairs(content:GetDescendants()) do
                             if child:IsA("GuiObject") and child:FindFirstChild("label") and child:FindFirstChild("sep") then
                                 child.Visible = child:FindFirstChild("label").Text:lower():find(query, 1, true) ~= nil
