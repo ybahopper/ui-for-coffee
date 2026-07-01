@@ -111,15 +111,15 @@ local TextService = cloneref(game:GetService("TextService"))
 local Players = cloneref(game:GetService("Players"))
 local Heartbeat = cloneref(game:GetService("RunService")).Heartbeat
 local TWEEN_INFO = TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
--- ponytail: hover helper, dims bg slightly from resting state
+-- ponytail: hover helper, reads current bg live so state changes don't break it
 local function hoverify(el)
-    local rest = el.BackgroundTransparency
-    local hover = math.max(rest - 0.08, 0)
+    local restBg
     el.MouseEnter:Connect(function()
-        TweenService:Create(el, TWEEN_INFO, { BackgroundTransparency = hover }):Play()
+        restBg = el.BackgroundTransparency
+        TweenService:Create(el, TWEEN_INFO, { BackgroundTransparency = math.max(restBg - 0.08, 0) }):Play()
     end)
     el.MouseLeave:Connect(function()
-        TweenService:Create(el, TWEEN_INFO, { BackgroundTransparency = rest }):Play()
+        if restBg then TweenService:Create(el, TWEEN_INFO, { BackgroundTransparency = restBg }):Play() end
     end)
 end
 local TOGGLE_ON = {
