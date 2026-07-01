@@ -2017,7 +2017,22 @@ function lib.new(config)
         local minimize_btn = title_bar:FindFirstChild("minimize_btn")
 
         local minTi = TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-        local mainSnapshot = {} -- captured at minimize time, restored at maximize time
+        local mainSnapshot = {}
+        -- snapshot bar originals once (it's static)
+        local barSnapshot = {}
+        if minimized_bar_ref then
+            for _, desc in ipairs(minimized_bar_ref:GetDescendants()) do
+                if desc:IsA("TextLabel") or desc:IsA("TextButton") or desc:IsA("TextBox") then
+                    barSnapshot[desc] = { tt = desc.TextTransparency }
+                elseif desc:IsA("ImageLabel") or desc:IsA("ImageButton") then
+                    barSnapshot[desc] = { it = desc.ImageTransparency }
+                elseif desc:IsA("Frame") then
+                    barSnapshot[desc] = { bg = desc.BackgroundTransparency }
+                elseif desc:IsA("UIStroke") then
+                    barSnapshot[desc] = { st = desc.Transparency }
+                end
+            end
+        end
         local mainOrigSize = main_frame.Size
         local mainOrigPos = main_frame.Position
         local mainOrigBgT = main_frame.BackgroundTransparency
@@ -2059,25 +2074,23 @@ function lib.new(config)
                 minimized_bar_ref.Position = UDim2.new(barOrigPos.X.Scale, barOrigPos.X.Offset, barOrigPos.Y.Scale, barOrigPos.Y.Offset - 12)
                 minimized_bar_ref.BackgroundTransparency = 1
                 for _, desc in ipairs(minimized_bar_ref:GetDescendants()) do
-                    if desc:IsA("TextLabel") or desc:IsA("TextButton") then
-                        desc.TextTransparency = 1
-                    elseif desc:IsA("ImageLabel") or desc:IsA("ImageButton") then
-                        desc.ImageTransparency = 1
-                    elseif desc:IsA("Frame") and desc.Name ~= "notif_badge" then
-                        desc.BackgroundTransparency = 1
-                    elseif desc:IsA("UIStroke") then
-                        desc.Transparency = 1
+                    local snap = barSnapshot[desc]
+                    if not snap then
+                    elseif snap.tt then desc.TextTransparency = 1
+                    elseif snap.it then desc.ImageTransparency = 1
+                    elseif snap.bg then desc.BackgroundTransparency = 1
+                    elseif snap.st then desc.Transparency = 1
                     end
                 end
                 minimized_bar_ref.Visible = true
                 TweenService:Create(minimized_bar_ref, minTi, { Position = barOrigPos, BackgroundTransparency = barOrigBgT }):Play()
                 for _, desc in ipairs(minimized_bar_ref:GetDescendants()) do
-                    if desc:IsA("TextLabel") or desc:IsA("TextButton") then
-                        TweenService:Create(desc, minTi, { TextTransparency = 0 }):Play()
-                    elseif desc:IsA("ImageLabel") or desc:IsA("ImageButton") then
-                        TweenService:Create(desc, minTi, { ImageTransparency = 0 }):Play()
-                    elseif desc:IsA("UIStroke") then
-                        TweenService:Create(desc, minTi, { Transparency = 0.6 }):Play()
+                    local snap = barSnapshot[desc]
+                    if not snap then
+                    elseif snap.tt then TweenService:Create(desc, minTi, { TextTransparency = snap.tt }):Play()
+                    elseif snap.it then TweenService:Create(desc, minTi, { ImageTransparency = snap.it }):Play()
+                    elseif snap.bg then TweenService:Create(desc, minTi, { BackgroundTransparency = snap.bg }):Play()
+                    elseif snap.st then TweenService:Create(desc, minTi, { Transparency = snap.st }):Play()
                     end
                 end
                 minAnimating = false
@@ -2092,18 +2105,28 @@ function lib.new(config)
             -- fade out bar
             local t1 = TweenService:Create(minimized_bar_ref, minTi, { BackgroundTransparency = 1, Position = UDim2.new(barOrigPos.X.Scale, barOrigPos.X.Offset, barOrigPos.Y.Scale, barOrigPos.Y.Offset - 12) })
             for _, desc in ipairs(minimized_bar_ref:GetDescendants()) do
-                if desc:IsA("TextLabel") or desc:IsA("TextButton") then
-                    TweenService:Create(desc, minTi, { TextTransparency = 1 }):Play()
-                elseif desc:IsA("ImageLabel") or desc:IsA("ImageButton") then
-                    TweenService:Create(desc, minTi, { ImageTransparency = 1 }):Play()
-                elseif desc:IsA("UIStroke") then
-                    TweenService:Create(desc, minTi, { Transparency = 1 }):Play()
+                local snap = barSnapshot[desc]
+                if not snap then
+                elseif snap.tt then TweenService:Create(desc, minTi, { TextTransparency = 1 }):Play()
+                elseif snap.it then TweenService:Create(desc, minTi, { ImageTransparency = 1 }):Play()
+                elseif snap.st then TweenService:Create(desc, minTi, { Transparency = 1 }):Play()
+                elseif snap.bg then TweenService:Create(desc, minTi, { BackgroundTransparency = 1 }):Play()
                 end
             end
             t1.Completed:Connect(function()
                 minimized_bar_ref.Visible = false
                 minimized_bar_ref.Position = barOrigPos
                 minimized_bar_ref.BackgroundTransparency = barOrigBgT
+                -- restore bar to original state while hidden
+                for _, desc in ipairs(minimized_bar_ref:GetDescendants()) do
+                    local snap = barSnapshot[desc]
+                    if not snap then
+                    elseif snap.tt then desc.TextTransparency = snap.tt
+                    elseif snap.it then desc.ImageTransparency = snap.it
+                    elseif snap.bg then desc.BackgroundTransparency = snap.bg
+                    elseif snap.st then desc.Transparency = snap.st
+                    end
+                end
                 -- restore + fade in main frame
                 main_frame.Visible = true
                 local s = mainSnapshot[main_frame]
