@@ -2133,9 +2133,6 @@ function lib.new(config)
     function window:showModal(modalConfig)
         modalConfig = modalConfig or {}
 
-        modal_frame.Visible = true
-        modal_backdrop.Visible = true
-
         local titleLabel = modal_frame:FindFirstChild("title")
         if titleLabel then titleLabel.Text = modalConfig.title or "Confirm" end
 
@@ -2149,13 +2146,64 @@ function lib.new(config)
         if confirmBtn then confirmBtn.Text = modalConfig.confirmText or "Confirm" end
         if cancelBtn then cancelBtn.Text = modalConfig.cancelText or "Cancel" end
 
+        -- snapshot modal child transparencies
+        local modalTi = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+        local modalSnap = {}
+        for _, d in ipairs(modal_frame:GetDescendants()) do
+            local props = {}
+            if d:IsA("GuiObject") then props.BackgroundTransparency = d.BackgroundTransparency end
+            if d:IsA("TextLabel") or d:IsA("TextButton") or d:IsA("TextBox") then props.TextTransparency = d.TextTransparency end
+            if d:IsA("ImageLabel") or d:IsA("ImageButton") then props.ImageTransparency = d.ImageTransparency end
+            if d:IsA("UIStroke") then props.Transparency = d.Transparency end
+            if next(props) then
+                modalSnap[d] = props
+                -- set invisible
+                if props.BackgroundTransparency then d.BackgroundTransparency = 1 end
+                if props.TextTransparency then d.TextTransparency = 1 end
+                if props.ImageTransparency then d.ImageTransparency = 1 end
+                if props.Transparency then d.Transparency = 1 end
+            end
+        end
+
+        -- backdrop starts transparent
+        local backdropTarget = modal_backdrop.BackgroundTransparency
+        modal_backdrop.BackgroundTransparency = 1
+
+        modal_frame.Visible = true
+        modal_backdrop.Visible = true
+
+        -- animate in
+        TweenService:Create(modal_backdrop, modalTi, { BackgroundTransparency = backdropTarget }):Play()
+        for d, props in pairs(modalSnap) do
+            TweenService:Create(d, modalTi, props):Play()
+        end
+
         local conns = {}
+        local closing = false
 
         local function closeModal(result)
-            modal_frame.Visible = false
-            modal_backdrop.Visible = false
-            for _, c in ipairs(conns) do c:Disconnect() end
-            if modalConfig.callback then modalConfig.callback(result) end
+            if closing then return end
+            closing = true
+            -- animate out
+            TweenService:Create(modal_backdrop, modalTi, { BackgroundTransparency = 1 }):Play()
+            for d, props in pairs(modalSnap) do
+                local out = {}
+                if props.BackgroundTransparency then out.BackgroundTransparency = 1 end
+                if props.TextTransparency then out.TextTransparency = 1 end
+                if props.ImageTransparency then out.ImageTransparency = 1 end
+                if props.Transparency then out.Transparency = 1 end
+                TweenService:Create(d, modalTi, out):Play()
+            end
+            task.delay(0.2, function()
+                modal_frame.Visible = false
+                modal_backdrop.Visible = false
+                -- restore snapshot so next open can re-snapshot correctly
+                for d, props in pairs(modalSnap) do
+                    for k, v in pairs(props) do d[k] = v end
+                end
+                for _, c in ipairs(conns) do c:Disconnect() end
+                if modalConfig.callback then modalConfig.callback(result) end
+            end)
         end
 
         if confirmBtn then
