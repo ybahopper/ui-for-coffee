@@ -102,6 +102,19 @@ for _, child in ipairs(card_template:GetChildren()) do
     if child:IsA("GuiObject") then child:Destroy() end
 end
 
+local dropdown_backdrop = Instance.new("TextButton")
+dropdown_backdrop.Name = "dropdown_backdrop"
+dropdown_backdrop.Size = UDim2.new(1, 0, 1, 0)
+dropdown_backdrop.BackgroundTransparency = 1
+dropdown_backdrop.Text = ""
+dropdown_backdrop.ZIndex = 9
+dropdown_backdrop.Visible = false
+dropdown_backdrop.Parent = AnimLoggerUI
+local _activeDropdownClose = nil
+dropdown_backdrop.MouseButton1Click:Connect(function()
+    if _activeDropdownClose then _activeDropdownClose() end
+end)
+
 local TweenService = cloneref(game:GetService("TweenService"))
 local UserInputService = cloneref(game:GetService("UserInputService"))
 local TextService = cloneref(game:GetService("TextService"))
@@ -825,6 +838,8 @@ function lib.new(config)
 
                 closeMenu = function()
                     isOpen = false
+                    dropdown_backdrop.Visible = false
+                    _activeDropdownClose = nil
                     animateOptions(false)
                     local menuStroke = menu:FindFirstChildOfClass("UIStroke")
                     TweenService:Create(menu, TweenInfo.new(0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
@@ -853,8 +868,13 @@ function lib.new(config)
                 end
 
                 btn.MouseButton1Click:Connect(function()
+                    if _activeDropdownClose and _activeDropdownClose ~= closeMenu then
+                        _activeDropdownClose()
+                    end
                     isOpen = not isOpen
                     if isOpen then
+                        dropdown_backdrop.Visible = true
+                        _activeDropdownClose = closeMenu
                         menu.Visible = true
                         menu.BackgroundTransparency = 0
                         local menuStroke = menu:FindFirstChildOfClass("UIStroke")
@@ -1328,6 +1348,8 @@ function lib.new(config)
 
                 local function closeMenu()
                     isOpen = false
+                    dropdown_backdrop.Visible = false
+                    _activeDropdownClose = nil
                     local menuStroke = menu:FindFirstChildOfClass("UIStroke")
                     TweenService:Create(menu, TweenInfo.new(0.2, Enum.EasingStyle.Quint), { BackgroundTransparency = 1 }):Play()
                     if menuStroke then TweenService:Create(menuStroke, TweenInfo.new(0.2, Enum.EasingStyle.Quint), { Transparency = 1 }):Play() end
@@ -1342,8 +1364,13 @@ function lib.new(config)
                 end
 
                 btn.MouseButton1Click:Connect(function()
+                    if _activeDropdownClose and _activeDropdownClose ~= closeMenu then
+                        _activeDropdownClose()
+                    end
                     isOpen = not isOpen
                     if isOpen then
+                        dropdown_backdrop.Visible = true
+                        _activeDropdownClose = closeMenu
                         menu.Visible = true
                         menu.BackgroundTransparency = 0
                         local menuStroke = menu:FindFirstChildOfClass("UIStroke")
