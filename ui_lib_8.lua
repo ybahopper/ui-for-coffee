@@ -2146,10 +2146,30 @@ function lib.new(config)
                     local query = searchInput.Text:lower()
                     if query == "" then
                         resetAllElements()
-                    else
-                        for _, child in ipairs(content:GetDescendants()) do
-                            if child:IsA("GuiObject") and child:FindFirstChild("label") and child:FindFirstChild("sep") then
-                                child.Visible = child:FindFirstChild("label").Text:lower():find(query, 1, true) ~= nil
+                        return
+                    end
+                    -- filter all elements across all tabs
+                    for _, child in ipairs(content:GetDescendants()) do
+                        if child:IsA("GuiObject") and child:FindFirstChild("label") and child:FindFirstChild("sep") then
+                            child.Visible = child:FindFirstChild("label").Text:lower():find(query, 1, true) ~= nil
+                        end
+                    end
+                    -- if current tab has no matches, switch to first tab that does
+                    local function tabHasMatch(t)
+                        for _, col in ipairs({t._left, t._right}) do
+                            for _, desc in ipairs(col:GetDescendants()) do
+                                if desc:IsA("GuiObject") and desc:FindFirstChild("label") and desc:FindFirstChild("sep") and desc.Visible then
+                                    return true
+                                end
+                            end
+                        end
+                        return false
+                    end
+                    if not tabHasMatch(activeTab) then
+                        for _, t in ipairs(tabs) do
+                            if tabHasMatch(t) then
+                                setActiveTab(t, true)
+                                break
                             end
                         end
                     end
