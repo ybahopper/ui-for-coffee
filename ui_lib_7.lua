@@ -1263,28 +1263,58 @@ function lib.new(config)
                 local pickerStrokeT = pickerStroke and pickerStroke.Transparency or 1
                 picker.Active = true
 
+                -- snapshot picker children alpha
+                local pickerChildSnap = {}
+                for _, desc in ipairs(picker:GetDescendants()) do
+                    if desc:IsA("TextLabel") or desc:IsA("TextButton") or desc:IsA("TextBox") then
+                        pickerChildSnap[desc] = { tt = desc.TextTransparency }
+                    elseif desc:IsA("ImageLabel") or desc:IsA("ImageButton") then
+                        pickerChildSnap[desc] = { it = desc.ImageTransparency }
+                    elseif desc:IsA("Frame") then
+                        pickerChildSnap[desc] = { bg = desc.BackgroundTransparency }
+                    end
+                end
+
+                local cpOpenTi = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+                local cpCloseTi = TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+
                 swatch.MouseButton1Click:Connect(function()
                     pickerOpen = not pickerOpen
                     if pickerOpen then
-                        -- fade + scale in
                         picker.Size = UDim2.new(pickerSize.X.Scale, pickerSize.X.Offset, 0, 0)
                         picker.BackgroundTransparency = 1
                         if pickerStroke then pickerStroke.Transparency = 1 end
+                        for desc, snap in pairs(pickerChildSnap) do
+                            if snap.tt then desc.TextTransparency = 1
+                            elseif snap.it then desc.ImageTransparency = 1
+                            elseif snap.bg then desc.BackgroundTransparency = 1
+                            end
+                        end
                         picker.Visible = true
                         picker.ClipsDescendants = true
-                        TweenService:Create(picker, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                            Size = pickerSize, BackgroundTransparency = pickerBgT,
-                        }):Play()
-                        if pickerStroke then TweenService:Create(pickerStroke, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Transparency = pickerStrokeT }):Play() end
+                        TweenService:Create(picker, cpOpenTi, { Size = pickerSize, BackgroundTransparency = pickerBgT }):Play()
+                        if pickerStroke then TweenService:Create(pickerStroke, cpOpenTi, { Transparency = pickerStrokeT }):Play() end
+                        for desc, snap in pairs(pickerChildSnap) do
+                            if snap.tt then TweenService:Create(desc, cpOpenTi, { TextTransparency = snap.tt }):Play()
+                            elseif snap.it then TweenService:Create(desc, cpOpenTi, { ImageTransparency = snap.it }):Play()
+                            elseif snap.bg then TweenService:Create(desc, cpOpenTi, { BackgroundTransparency = snap.bg }):Play()
+                            end
+                        end
                         updateVisual()
                         if swatchStroke then
                             TweenService:Create(swatchStroke, TWEEN_INFO, { Color = ACCENT, Transparency = 0 }):Play()
                         end
                     else
-                        local t = TweenService:Create(picker, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                        local t = TweenService:Create(picker, cpCloseTi, {
                             Size = UDim2.new(pickerSize.X.Scale, pickerSize.X.Offset, 0, 0), BackgroundTransparency = 1,
                         })
-                        if pickerStroke then TweenService:Create(pickerStroke, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Transparency = 1 }):Play() end
+                        if pickerStroke then TweenService:Create(pickerStroke, cpCloseTi, { Transparency = 1 }):Play() end
+                        for desc, snap in pairs(pickerChildSnap) do
+                            if snap.tt then TweenService:Create(desc, cpCloseTi, { TextTransparency = 1 }):Play()
+                            elseif snap.it then TweenService:Create(desc, cpCloseTi, { ImageTransparency = 1 }):Play()
+                            elseif snap.bg then TweenService:Create(desc, cpCloseTi, { BackgroundTransparency = 1 }):Play()
+                            end
+                        end
                         t.Completed:Connect(function()
                             picker.Visible = false
                             picker.ClipsDescendants = false
