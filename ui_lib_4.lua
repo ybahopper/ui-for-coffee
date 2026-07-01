@@ -23,7 +23,7 @@ _G._uiLibConnections = {}
 
 local RBXMXParser = load("RBXMXParser.lua")
 local _temp = Instance.new("Folder")
-local AnimLoggerUI = RBXMXParser.Deserialize(fetch("uilib_3.rbxmx"), _temp)[1]
+local AnimLoggerUI = RBXMXParser.Deserialize(fetch("uilib_2.rbxmx"), _temp)[1]
 
 local main_frame = AnimLoggerUI.main_frame
 local content = main_frame.content
@@ -1273,7 +1273,7 @@ function lib.new(config)
                 local function updateOptStyles()
                     for _, ob in ipairs(optButtons) do
                         local isSel = selected[ob.opt]
-                        ob.btn.TextLabel.Text = (isSel and "✓ " or "   ") .. ob.opt
+                        ob.btn.TextLabel.Text = ob.opt
                         TweenService:Create(ob.btn, TWEEN_INFO, {
                             BackgroundTransparency = isSel and 0.7 or 1
                         }):Play()
@@ -1283,7 +1283,7 @@ function lib.new(config)
                 for i, opt in ipairs(options) do
                     local optBtn = dropdown_opt_template:Clone()
                     optBtn.LayoutOrder = i
-                    optBtn.TextLabel.Text = (selected[opt] and "✓ " or "   ") .. opt
+                    optBtn.TextLabel.Text = opt
                     optBtn.Visible = true
                     optBtn.BackgroundTransparency = selected[opt] and 0.7 or 1
                     optBtn.TextLabel.TextTransparency = 1
@@ -1382,23 +1382,45 @@ function lib.new(config)
                 elementCount = elementCount + 1
                 row.LayoutOrder = elementCount
                 row.Visible = true
-                row.AutomaticSize = Enum.AutomaticSize.Y
+                row.ClipsDescendants = true
 
+                -- Row uses a UIListLayout so header + content stack vertically
+                local rowLayout = Instance.new("UIListLayout")
+                rowLayout.FillDirection = Enum.FillDirection.Vertical
+                rowLayout.SortOrder = Enum.SortOrder.LayoutOrder
+                rowLayout.Padding = UDim.new(0, 0)
+                rowLayout.Parent = row
+
+                header.LayoutOrder = 1
+
+                -- Content frame sized by its own layout
                 local contentFrame = Instance.new("Frame")
                 contentFrame.Name = "content"
-                contentFrame.Size = UDim2.new(1, -8, 0, #items * 20 + 8)
-                contentFrame.Position = UDim2.new(0, 8, 0, 0)
-                contentFrame.BackgroundColor3 = Color3.fromRGB(26, 19, 14)
-                contentFrame.BackgroundTransparency = 0
-                contentFrame.Visible = false
+                contentFrame.Size = UDim2.new(1, 0, 0, 0)
+                contentFrame.BackgroundTransparency = 1
                 contentFrame.ClipsDescendants = true
-                contentFrame.AutomaticSize = Enum.AutomaticSize.None
                 contentFrame.LayoutOrder = 2
                 contentFrame.Parent = row
 
-                local contentCorner = Instance.new("UICorner")
-                contentCorner.CornerRadius = UDim.new(0, 4)
-                contentCorner.Parent = contentFrame
+                -- Inner frame holds actual items, auto-sizes so we know the target height
+                local inner = Instance.new("Frame")
+                inner.Name = "inner"
+                inner.Size = UDim2.new(1, -8, 0, 0)
+                inner.Position = UDim2.new(0, 8, 0, 0)
+                inner.AutomaticSize = Enum.AutomaticSize.Y
+                inner.BackgroundTransparency = 1
+                inner.Parent = contentFrame
+
+                local innerLayout = Instance.new("UIListLayout")
+                innerLayout.FillDirection = Enum.FillDirection.Vertical
+                innerLayout.SortOrder = Enum.SortOrder.LayoutOrder
+                innerLayout.Padding = UDim.new(0, 2)
+                innerLayout.Parent = inner
+
+                local innerPadding = Instance.new("UIPadding")
+                innerPadding.PaddingTop = UDim.new(0, 4)
+                innerPadding.PaddingBottom = UDim.new(0, 4)
+                innerPadding.Parent = inner
 
                 local accentBar = Instance.new("Frame")
                 accentBar.Size = UDim2.new(0, 2, 1, 0)
@@ -1408,45 +1430,63 @@ function lib.new(config)
 
                 local itemLabels, itemValues = {}, {}
                 for i, item in ipairs(items) do
+                    local itemRow = Instance.new("Frame")
+                    itemRow.Size = UDim2.new(1, 0, 0, 16)
+                    itemRow.BackgroundTransparency = 1
+                    itemRow.LayoutOrder = i
+                    itemRow.Parent = inner
+
                     local lbl = Instance.new("TextLabel")
-                    lbl.Size = UDim2.new(0.6, -10, 0, 14)
-                    lbl.Position = UDim2.new(0, 12, 0, (i - 1) * 20 + 5)
+                    lbl.Size = UDim2.new(0.6, 0, 1, 0)
+                    lbl.Position = UDim2.new(0, 4, 0, 0)
                     lbl.BackgroundTransparency = 1
                     lbl.TextColor3 = DIM_TEXT
                     lbl.FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Regular)
                     lbl.TextSize = 11
                     lbl.TextXAlignment = Enum.TextXAlignment.Left
                     lbl.Text = item.label or ""
-                    lbl.Parent = contentFrame
+                    lbl.Parent = itemRow
                     itemLabels[i] = lbl
 
                     local val = Instance.new("TextLabel")
-                    val.Size = UDim2.new(0, 40, 0, 14)
-                    val.Position = UDim2.new(1, -48, 0, (i - 1) * 20 + 5)
+                    val.Size = UDim2.new(0.4, -4, 1, 0)
+                    val.Position = UDim2.new(0.6, 0, 0, 0)
                     val.BackgroundTransparency = 1
                     val.TextColor3 = TEXT_COLOR
                     val.FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Medium)
                     val.TextSize = 11
                     val.TextXAlignment = Enum.TextXAlignment.Right
                     val.Text = item.value or ""
-                    val.Parent = contentFrame
+                    val.Parent = itemRow
                     itemValues[i] = val
                 end
 
+                -- Calculate target height after layout resolves
                 local isOpen = false
                 local chevron = header:FindFirstChild("chevron")
+                local tweenInfo = TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+
+                -- Set initial collapsed state
+                row.Size = UDim2.new(1, 0, 0, header.AbsoluteSize.Y)
+                contentFrame.Size = UDim2.new(1, 0, 0, 0)
 
                 header.MouseButton1Click:Connect(function()
                     isOpen = not isOpen
-                    TweenService:Create(chevron, TweenInfo.new(0.2, Enum.EasingStyle.Quint), {
+
+                    TweenService:Create(chevron, tweenInfo, {
                         Rotation = isOpen and 90 or 0,
                         TextColor3 = isOpen and ACCENT or DIM_TEXT,
                     }):Play()
-                    if isOpen then
-                        contentFrame.Visible = true
-                    else
-                        contentFrame.Visible = false
-                    end
+
+                    local contentHeight = isOpen and inner.AbsoluteSize.Y or 0
+                    local headerHeight = header.AbsoluteSize.Y
+
+                    TweenService:Create(contentFrame, tweenInfo, {
+                        Size = UDim2.new(1, 0, 0, contentHeight),
+                    }):Play()
+                    TweenService:Create(row, tweenInfo, {
+                        Size = UDim2.new(1, 0, 0, headerHeight + contentHeight),
+                    }):Play()
                 end)
 
                 row.Parent = card
