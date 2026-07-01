@@ -1814,7 +1814,7 @@
 					<Content name="BottomImage"><url>rbxasset://textures/ui/Scroll/scroll-bottom.png</url></Content>
 					<Vector2 name="CanvasPosition">
 						<X>0</X>
-						<Y>281</Y>
+						<Y>347</Y>
 					</Vector2>
 					<UDim2 name="CanvasSize">
 						<XS>0</XS>
@@ -2169,7 +2169,7 @@
 								<token name="ItemLineAlignment">0</token>
 								<UDim name="Padding">
 									<S>0</S>
-									<O>4</O>
+									<O>6</O>
 								</UDim>
 								<token name="VerticalFlex">0</token>
 								<bool name="Wraps">false</bool>
@@ -2869,7 +2869,7 @@
 										<XS>0</XS>
 										<XO>0</XO>
 										<YS>1</YS>
-										<YO>-1</YO>
+										<YO>2</YO>
 									</UDim2>
 									<float name="Rotation">0</float>
 									<bool name="Selectable">false</bool>
@@ -3303,7 +3303,7 @@
 										<XS>0</XS>
 										<XO>0</XO>
 										<YS>1</YS>
-										<YO>-1</YO>
+										<YO>2</YO>
 									</UDim2>
 									<float name="Rotation">0</float>
 									<bool name="Selectable">false</bool>
@@ -3884,7 +3884,7 @@
 										<XS>0</XS>
 										<XO>0</XO>
 										<YS>1</YS>
-										<YO>-1</YO>
+										<YO>2</YO>
 									</UDim2>
 									<float name="Rotation">0</float>
 									<bool name="Selectable">false</bool>
@@ -4453,7 +4453,7 @@
 										<XS>0</XS>
 										<XO>0</XO>
 										<YS>1</YS>
-										<YO>-1</YO>
+										<YO>2</YO>
 									</UDim2>
 									<float name="Rotation">0</float>
 									<bool name="Selectable">false</bool>
@@ -5022,7 +5022,7 @@
 										<XS>0</XS>
 										<XO>0</XO>
 										<YS>1</YS>
-										<YO>-1</YO>
+										<YO>2</YO>
 									</UDim2>
 									<float name="Rotation">0</float>
 									<bool name="Selectable">false</bool>
@@ -6645,7 +6645,7 @@
 										<XS>0</XS>
 										<XO>0</XO>
 										<YS>1</YS>
-										<YO>-1</YO>
+										<YO>2</YO>
 									</UDim2>
 									<float name="Rotation">0</float>
 									<bool name="Selectable">false</bool>
@@ -7214,7 +7214,7 @@
 										<XS>0</XS>
 										<XO>0</XO>
 										<YS>1</YS>
-										<YO>-1</YO>
+										<YO>2</YO>
 									</UDim2>
 									<float name="Rotation">0</float>
 									<bool name="Selectable">false</bool>
@@ -8647,7 +8647,7 @@
 										<XS>0</XS>
 										<XO>0</XO>
 										<YS>1</YS>
-										<YO>-1</YO>
+										<YO>2</YO>
 									</UDim2>
 									<float name="Rotation">0</float>
 									<bool name="Selectable">false</bool>
@@ -9026,7 +9026,7 @@
 										<XS>0</XS>
 										<XO>0</XO>
 										<YS>1</YS>
-										<YO>-1</YO>
+										<YO>2</YO>
 									</UDim2>
 									<float name="Rotation">0</float>
 									<bool name="Selectable">false</bool>
@@ -10483,7 +10483,7 @@
 										<XS>0</XS>
 										<XO>0</XO>
 										<YS>1</YS>
-										<YO>-1</YO>
+										<YO>2</YO>
 									</UDim2>
 									<float name="Rotation">0</float>
 									<bool name="Selectable">false</bool>
@@ -11612,7 +11612,7 @@
 										<XS>0</XS>
 										<XO>0</XO>
 										<YS>1</YS>
-										<YO>-1</YO>
+										<YO>2</YO>
 									</UDim2>
 									<float name="Rotation">0</float>
 									<bool name="Selectable">false</bool>
@@ -11868,7 +11868,7 @@
 								<token name="ItemLineAlignment">0</token>
 								<UDim name="Padding">
 									<S>0</S>
-									<O>4</O>
+									<O>6</O>
 								</UDim>
 								<token name="VerticalFlex">0</token>
 								<bool name="Wraps">false</bool>
@@ -12481,7 +12481,7 @@
 										<XS>0</XS>
 										<XO>0</XO>
 										<YS>1</YS>
-										<YO>-1</YO>
+										<YO>2</YO>
 									</UDim2>
 									<float name="Rotation">0</float>
 									<bool name="Selectable">false</bool>
@@ -12886,7 +12886,7 @@
 										<XS>0</XS>
 										<XO>0</XO>
 										<YS>1</YS>
-										<YO>-1</YO>
+										<YO>2</YO>
 									</UDim2>
 									<float name="Rotation">0</float>
 									<bool name="Selectable">false</bool>
@@ -13291,7 +13291,7 @@
 										<XS>0</XS>
 										<XO>0</XO>
 										<YS>1</YS>
-										<YO>-1</YO>
+										<YO>2</YO>
 									</UDim2>
 									<float name="Rotation">0</float>
 									<bool name="Selectable">false</bool>
@@ -13700,7 +13700,7 @@
 										<XS>0</XS>
 										<XO>0</XO>
 										<YS>1</YS>
-										<YO>-1</YO>
+										<YO>2</YO>
 									</UDim2>
 									<float name="Rotation">0</float>
 									<bool name="Selectable">false</bool>
@@ -14109,7 +14109,7 @@
 										<XS>0</XS>
 										<XO>0</XO>
 										<YS>1</YS>
-										<YO>-1</YO>
+										<YO>2</YO>
 									</UDim2>
 									<float name="Rotation">0</float>
 									<bool name="Selectable">false</bool>
@@ -14393,7 +14393,7 @@
 										<XS>0</XS>
 										<XO>0</XO>
 										<YS>1</YS>
-										<YO>-1</YO>
+										<YO>2</YO>
 									</UDim2>
 									<float name="Rotation">0</float>
 									<bool name="Selectable">false</bool>
@@ -17100,7 +17100,7 @@
 										<XS>0</XS>
 										<XO>0</XO>
 										<YS>1</YS>
-										<YO>-1</YO>
+										<YO>2</YO>
 									</UDim2>
 									<float name="Rotation">0</float>
 									<bool name="Selectable">false</bool>
@@ -17625,7 +17625,7 @@
 										<XS>0</XS>
 										<XO>0</XO>
 										<YS>1</YS>
-										<YO>-1</YO>
+										<YO>2</YO>
 									</UDim2>
 									<float name="Rotation">0</float>
 									<bool name="Selectable">false</bool>
@@ -18660,9 +18660,9 @@
 										<Ref name="NextSelectionUp">null</Ref>
 										<UDim2 name="Position">
 											<XS>0</XS>
-											<XO>10</XO>
+											<XO>0</XO>
 											<YS>1</YS>
-											<YO>-1</YO>
+											<YO>2</YO>
 										</UDim2>
 										<float name="Rotation">0</float>
 										<bool name="Selectable">false</bool>
@@ -19231,9 +19231,9 @@
 										<Ref name="NextSelectionUp">null</Ref>
 										<UDim2 name="Position">
 											<XS>0</XS>
-											<XO>10</XO>
+											<XO>0</XO>
 											<YS>1</YS>
-											<YO>-1</YO>
+											<YO>2</YO>
 										</UDim2>
 										<float name="Rotation">0</float>
 										<bool name="Selectable">false</bool>
@@ -19802,9 +19802,9 @@
 										<Ref name="NextSelectionUp">null</Ref>
 										<UDim2 name="Position">
 											<XS>0</XS>
-											<XO>10</XO>
+											<XO>0</XO>
 											<YS>1</YS>
-											<YO>-1</YO>
+											<YO>2</YO>
 										</UDim2>
 										<float name="Rotation">0</float>
 										<bool name="Selectable">false</bool>
