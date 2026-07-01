@@ -1950,6 +1950,7 @@ function lib.new(config)
             setActiveTab(tab, true)
         end
 
+        hoverify(btn)
         btn.MouseButton1Click:Connect(function()
             setActiveTab(tab)
         end)
@@ -2190,12 +2191,14 @@ function lib.new(config)
         end
 
         if minimize_btn then
+            hoverify(minimize_btn)
             minimize_btn.MouseButton1Click:Connect(animateMinimize)
         end
 
         if minimized_bar_ref then
             local maxBtn = minimized_bar_ref:FindFirstChild("maximize_btn")
             if maxBtn then
+                hoverify(maxBtn)
                 maxBtn.MouseButton1Click:Connect(animateMaximize)
             end
 
@@ -2250,6 +2253,7 @@ function lib.new(config)
                 end
             end
 
+            hoverify(search_closed_btn)
             search_closed_btn.MouseButton1Click:Connect(function()
                 -- icon slides left, bar fades in behind it
                 search_open_frame.Size = UDim2.new(0, 0, 0, search_open_frame.Size.Y.Offset)
