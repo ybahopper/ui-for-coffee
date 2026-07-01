@@ -2066,16 +2066,53 @@ function lib.new(config)
         notif.Position = UDim2.new(1, 20, 0, 0)
         notif.Parent = notifications_container
 
-        TweenService:Create(notif, TweenInfo.new(0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
-            Position = UDim2.new(0, 0, 0, 0),
-        }):Play()
+        -- snapshot original alphas
+        local notifSnap = { bg = notif.BackgroundTransparency }
+        local notifChildSnap = {}
+        for _, desc in ipairs(notif:GetDescendants()) do
+            if desc:IsA("TextLabel") or desc:IsA("TextButton") or desc:IsA("TextBox") then
+                notifChildSnap[desc] = { tt = desc.TextTransparency }
+            elseif desc:IsA("ImageLabel") or desc:IsA("ImageButton") then
+                notifChildSnap[desc] = { it = desc.ImageTransparency }
+            elseif desc:IsA("Frame") then
+                notifChildSnap[desc] = { bg = desc.BackgroundTransparency }
+            elseif desc:IsA("UIStroke") then
+                notifChildSnap[desc] = { st = desc.Transparency }
+            end
+        end
+
+        -- set transparent before animating in
+        notif.BackgroundTransparency = 1
+        for desc, snap in pairs(notifChildSnap) do
+            if snap.tt then desc.TextTransparency = 1
+            elseif snap.it then desc.ImageTransparency = 1
+            elseif snap.bg then desc.BackgroundTransparency = 1
+            elseif snap.st then desc.Transparency = 1
+            end
+        end
+
+        local notifInTi = TweenInfo.new(0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+        TweenService:Create(notif, notifInTi, { Position = UDim2.new(0, 0, 0, 0), BackgroundTransparency = notifSnap.bg }):Play()
+        for desc, snap in pairs(notifChildSnap) do
+            if snap.tt then TweenService:Create(desc, notifInTi, { TextTransparency = snap.tt }):Play()
+            elseif snap.it then TweenService:Create(desc, notifInTi, { ImageTransparency = snap.it }):Play()
+            elseif snap.bg then TweenService:Create(desc, notifInTi, { BackgroundTransparency = snap.bg }):Play()
+            elseif snap.st then TweenService:Create(desc, notifInTi, { Transparency = snap.st }):Play()
+            end
+        end
 
         task.delay(duration, function()
             notifCount = math.max(0, notifCount - 1)
             updateNotifBadge()
-            local fadeOut = TweenService:Create(notif, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.In), {
-                Position = UDim2.new(1, 20, 0, 0),
-            })
+            local notifOutTi = TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+            local fadeOut = TweenService:Create(notif, notifOutTi, { Position = UDim2.new(1, 20, 0, 0), BackgroundTransparency = 1 })
+            for desc, snap in pairs(notifChildSnap) do
+                if snap.tt then TweenService:Create(desc, notifOutTi, { TextTransparency = 1 }):Play()
+                elseif snap.it then TweenService:Create(desc, notifOutTi, { ImageTransparency = 1 }):Play()
+                elseif snap.bg then TweenService:Create(desc, notifOutTi, { BackgroundTransparency = 1 }):Play()
+                elseif snap.st then TweenService:Create(desc, notifOutTi, { Transparency = 1 }):Play()
+                end
+            end
             fadeOut:Play()
             fadeOut.Completed:Connect(function()
                 notif:Destroy()
