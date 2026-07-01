@@ -1641,10 +1641,34 @@ function lib.new(config)
                 elementCount = elementCount + 1
                 row.LayoutOrder = elementCount
                 row.Visible = true
-                local dtSep = row:FindFirstChild("sep")
-                if dtSep then dtSep.LayoutOrder = 999 end -- ponytail: UIListLayout ignores Position, sort last instead
 
-                local header = row:FindFirstChild("header")
+                -- ponytail: restructure opaque UIListLayout row so sep works
+                -- move table content into inner frame, keep sep in outer transparent wrapper
+                local dtBgColor = row.BackgroundColor3
+                row.BackgroundTransparency = 1
+                row.AutomaticSize = Enum.AutomaticSize.None
+                row.ClipsDescendants = false
+
+                local tableFrame = Instance.new("Frame")
+                tableFrame.Name = "table"
+                tableFrame.BackgroundColor3 = dtBgColor
+                tableFrame.BackgroundTransparency = 0
+                tableFrame.BorderSizePixel = 0
+                tableFrame.Position = UDim2.new(0, 0, 0, 4)
+                tableFrame.ClipsDescendants = true
+                tableFrame.AutomaticSize = Enum.AutomaticSize.Y
+                tableFrame.Size = UDim2.new(1, 0, 0, 0)
+                tableFrame.Parent = row
+
+                for _, child in ipairs(row:GetChildren()) do
+                    if child.Name ~= "sep" and child ~= tableFrame then
+                        child.Parent = tableFrame
+                    end
+                end
+
+                local dtSep = row:FindFirstChild("sep")
+
+                local header = tableFrame:FindFirstChild("header")
                 local colNames = { "col_1", "col_2", "col_3" }
                 for i, name in ipairs(colNames) do
                     local col = header:FindFirstChild(name)
@@ -1683,7 +1707,7 @@ function lib.new(config)
                         end
                     end
 
-                    cell.Parent = row
+                    cell.Parent = tableFrame
                     rowFrames[#rowFrames + 1] = cell
                 end
 
@@ -1691,16 +1715,22 @@ function lib.new(config)
                     addTableRow(data, i)
                 end
 
+                -- size wrapper to fit inner table + padding
+                local contentH = 24 + #rows * 26
+                row.Size = UDim2.new(1, 0, 0, contentH + 8)
+
                 row.Parent = card
                 updateSeparators()
 
                 return {
                     addRow = function(_, data)
                         addTableRow(data, #rowFrames + 1)
+                        row.Size = UDim2.new(1, 0, 0, 24 + #rowFrames * 26 + 8)
                     end,
                     clear = function()
                         for _, rf in ipairs(rowFrames) do rf:Destroy() end
                         rowFrames = {}
+                        row.Size = UDim2.new(1, 0, 0, 24 + 8)
                     end,
                     get = function()
                         return #rowFrames
@@ -1717,6 +1747,26 @@ function lib.new(config)
                 row.LayoutOrder = elementCount
                 row.Visible = true
 
+                -- ponytail: make opaque row transparent, use bg frame for brown area
+                local scBgColor = row.BackgroundColor3
+                local origH = row.Size.Y.Offset
+                row.BackgroundTransparency = 1
+                row.ClipsDescendants = false
+                row.Size = UDim2.new(1, 0, 0, origH + 8)
+
+                local bg = Instance.new("Frame")
+                bg.Name = "bg"
+                bg.Size = UDim2.new(1, 0, 0, origH)
+                bg.Position = UDim2.new(0, 0, 0, 4)
+                bg.BackgroundColor3 = scBgColor
+                bg.BackgroundTransparency = 0
+                bg.BorderSizePixel = 0
+                bg.ClipsDescendants = true
+                bg.ZIndex = 0
+                bg.Parent = row
+                local corner = row:FindFirstChildOfClass("UICorner")
+                if corner then corner.Parent = bg end
+
                 local statFrames = {}
                 local colWidth = 1 / math.max(#stats, 1)
 
@@ -1724,8 +1774,8 @@ function lib.new(config)
                     local entry = stat_entry_template:Clone()
                     entry.Name = "stat_" .. i
                     entry.Visible = true
-                    entry.Size = UDim2.new(colWidth, 0, 1, 0)
-                    entry.Position = UDim2.new((i - 1) * colWidth, 0, 0, 0)
+                    entry.Size = UDim2.new(colWidth, 0, 0, origH)
+                    entry.Position = UDim2.new((i - 1) * colWidth, 0, 0, 4)
 
                     entry:FindFirstChild("label").Text = stat.label or ""
                     entry:FindFirstChild("value").Text = stat.value or ""
@@ -1739,8 +1789,8 @@ function lib.new(config)
                         local div = Instance.new("Frame")
                         div.Name = "divider_" .. i
                         div.Size = UDim2.new(0, 1, 0, 30)
-                        div.Position = UDim2.new(i * colWidth, 0, 0.5, 0)
-                        div.AnchorPoint = Vector2.new(0.5, 0.5)
+                        div.Position = UDim2.new(i * colWidth, 0, 0, 4 + (origH - 30) / 2)
+                        div.AnchorPoint = Vector2.new(0.5, 0)
                         div.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
                         div.BackgroundTransparency = 0.9
                         div.BorderSizePixel = 0
@@ -1782,18 +1832,22 @@ function lib.new(config)
 
 
                 local eventHeight = 28
-                local totalHeight = math.max(#events * eventHeight, eventHeight) + 8 -- ponytail: breathing room for sep
+                local eventPad = 4 -- ponytail: top/bottom padding so sep has room
+                local totalHeight = math.max(#events * eventHeight, eventHeight) + eventPad * 2
                 row.Size = UDim2.new(1, 0, 0, totalHeight)
 
                 local line = row:FindFirstChild("line")
-                if line then line.Size = UDim2.new(0, 2, 1, 0) end
+                if line then
+                    line.Size = UDim2.new(0, 2, 0, #events * eventHeight)
+                    line.Position = UDim2.new(0, 14, 0, eventPad)
+                end
 
                 local eventFrames = {}
 
                 for i, ev in ipairs(events) do
                     local evFrame = timeline_event_template:Clone()
                     evFrame.Name = "event_" .. i
-                    evFrame.Position = UDim2.new(0, 0, 0, (i - 1) * eventHeight)
+                    evFrame.Position = UDim2.new(0, 0, 0, (i - 1) * eventHeight + eventPad)
                     evFrame.Visible = true
 
                     evFrame:FindFirstChild("title").Text = ev.title or ""
@@ -1815,7 +1869,7 @@ function lib.new(config)
                         local i = #eventFrames + 1
                         local evFrame = timeline_event_template:Clone()
                         evFrame.Name = "event_" .. i
-                        evFrame.Position = UDim2.new(0, 0, 0, (i - 1) * eventHeight)
+                        evFrame.Position = UDim2.new(0, 0, 0, (i - 1) * eventHeight + eventPad)
                         evFrame.Visible = true
                         evFrame:FindFirstChild("title").Text = ev.title or ""
                         evFrame:FindFirstChild("desc").Text = ev.desc or ""
@@ -1823,7 +1877,10 @@ function lib.new(config)
                         if ev.color then evFrame:FindFirstChild("dot").BackgroundColor3 = ev.color end
                         evFrame.Parent = row
                         eventFrames[i] = evFrame
-                        row.Size = UDim2.new(1, 0, 0, i * eventHeight)
+                        row.Size = UDim2.new(1, 0, 0, i * eventHeight + eventPad * 2)
+                        if line then
+                            line.Size = UDim2.new(0, 2, 0, i * eventHeight)
+                        end
                     end,
                     clear = function()
                         for _, ef in ipairs(eventFrames) do ef:Destroy() end
