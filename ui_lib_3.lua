@@ -446,8 +446,6 @@ function lib.new(config)
             local column = (side == "right") and right or left
 
             local card = card_template:Clone()
-            local cardLayout = card:FindFirstChildOfClass("UIListLayout")
-            if cardLayout then cardLayout.Padding = UDim.new(0, 1) end
 
             if cardConfig.name then
                 local header = section_header_template:Clone()
@@ -1643,6 +1641,8 @@ function lib.new(config)
                 elementCount = elementCount + 1
                 row.LayoutOrder = elementCount
                 row.Visible = true
+                local dtSep = row:FindFirstChild("sep")
+                if dtSep then dtSep.LayoutOrder = 999 end -- ponytail: UIListLayout ignores Position, sort last instead
 
                 local header = row:FindFirstChild("header")
                 local colNames = { "col_1", "col_2", "col_3" }
@@ -1782,7 +1782,7 @@ function lib.new(config)
 
 
                 local eventHeight = 28
-                local totalHeight = math.max(#events * eventHeight, eventHeight)
+                local totalHeight = math.max(#events * eventHeight, eventHeight) + 8 -- ponytail: breathing room for sep
                 row.Size = UDim2.new(1, 0, 0, totalHeight)
 
                 local line = row:FindFirstChild("line")
