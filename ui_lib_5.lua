@@ -111,6 +111,15 @@ local TextService = cloneref(game:GetService("TextService"))
 local Players = cloneref(game:GetService("Players"))
 local Heartbeat = cloneref(game:GetService("RunService")).Heartbeat
 local TWEEN_INFO = TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+-- ponytail: one helper for row hover, 0.92 bg tween
+local function hoverify(row)
+    row.MouseEnter:Connect(function()
+        TweenService:Create(row, TWEEN_INFO, { BackgroundTransparency = 0.92 }):Play()
+    end)
+    row.MouseLeave:Connect(function()
+        TweenService:Create(row, TWEEN_INFO, { BackgroundTransparency = 1 }):Play()
+    end)
+end
 local TOGGLE_ON = {
     bg = Color3.fromRGB(194, 137, 92),
     bgTransparency = 0,
@@ -164,6 +173,18 @@ function lib.new(config)
         title_bar.logo.Visible = true
     else
         title_bar.logo.Visible = false
+    end
+
+    if minimized_bar_ref then
+        local barTitle = minimized_bar_ref:FindFirstChild("title")
+        if barTitle then barTitle.Text = config.name or "UI Library" end
+        local barLogo = minimized_bar_ref:FindFirstChild("logo")
+        if barLogo and config.logo then
+            barLogo.Image = "rbxassetid://" .. tostring(config.logo)
+            barLogo.Visible = true
+        elseif barLogo then
+            barLogo.Visible = false
+        end
     end
 
     local dragging = false
@@ -533,6 +554,7 @@ function lib.new(config)
                 end
 
                 applyStyle(state, false)
+                hoverify(row)
                 row.Parent = card
                 updateSeparators()
 
@@ -609,6 +631,7 @@ function lib.new(config)
 
                 value = snapToStep(value)
                 updateVisual(value)
+                hoverify(row)
                 row.Parent = card
                 updateSeparators()
 
@@ -892,6 +915,7 @@ function lib.new(config)
                     end
                 end)
 
+                hoverify(row)
                 row.Parent = card
                 updateSeparators()
 
@@ -919,6 +943,12 @@ function lib.new(config)
                 row.Parent = card
                 updateSeparators()
 
+                btn.MouseEnter:Connect(function()
+                    TweenService:Create(btn, TWEEN_INFO, { BackgroundTransparency = 0.75 }):Play()
+                end)
+                btn.MouseLeave:Connect(function()
+                    TweenService:Create(btn, TWEEN_INFO, { BackgroundTransparency = 0.84 }):Play()
+                end)
                 btn.MouseButton1Down:Connect(function()
                     TweenService:Create(btn, TweenInfo.new(0.08, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
                         BackgroundTransparency = 0.65
@@ -949,6 +979,7 @@ function lib.new(config)
 
                 local btn = row.button
                 btn.Text = key.Name
+                hoverify(row)
                 row.Parent = card
                 updateSeparators()
 
@@ -1067,6 +1098,7 @@ function lib.new(config)
                 elementCount = elementCount + 1
                 row.LayoutOrder = elementCount
                 row.Visible = true
+                hoverify(row)
                 row.Parent = card
                 updateSeparators()
 
@@ -1233,6 +1265,7 @@ function lib.new(config)
                     end
                 end)
 
+                hoverify(row)
                 row.Parent = card
                 updateSeparators()
                 updateVisual()
@@ -1390,6 +1423,7 @@ function lib.new(config)
                     end
                 end)
 
+                hoverify(row)
                 row.Parent = card
                 updateSeparators()
 
@@ -1527,6 +1561,7 @@ function lib.new(config)
                     }):Play()
                 end)
 
+                hoverify(row)
                 row.Parent = card
                 updateSeparators()
 
@@ -1618,6 +1653,7 @@ function lib.new(config)
                 end
 
                 updateStars()
+                hoverify(row)
                 row.Parent = card
                 updateSeparators()
 
