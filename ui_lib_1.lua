@@ -102,18 +102,7 @@ for _, child in ipairs(card_template:GetChildren()) do
     if child:IsA("GuiObject") then child:Destroy() end
 end
 
-local dropdown_backdrop = Instance.new("TextButton")
-dropdown_backdrop.Name = "dropdown_backdrop"
-dropdown_backdrop.Size = UDim2.new(1, 0, 1, 0)
-dropdown_backdrop.BackgroundTransparency = 1
-dropdown_backdrop.Text = ""
-dropdown_backdrop.ZIndex = 9
-dropdown_backdrop.Visible = false
-dropdown_backdrop.Parent = AnimLoggerUI
 local _activeDropdownClose = nil
-dropdown_backdrop.MouseButton1Click:Connect(function()
-    if _activeDropdownClose then _activeDropdownClose() end
-end)
 
 local TweenService = cloneref(game:GetService("TweenService"))
 local UserInputService = cloneref(game:GetService("UserInputService"))
@@ -751,9 +740,15 @@ function lib.new(config)
                 menu.AutomaticSize = Enum.AutomaticSize.None
                 menu.Size = UDim2.new(menuWidth.Scale, menuWidth.Offset, 0, 0)
                 menu.ClipsDescendants = true
-                menu.Active = true
-                menu.InputSink = Enum.InputSink.All
                 menu.Parent = row
+
+                local function setCardInteractable(enabled)
+                    for _, sibling in ipairs(card:GetChildren()) do
+                        if sibling:IsA("GuiObject") and sibling ~= row then
+                            sibling.Interactable = enabled
+                        end
+                    end
+                end
 
                 local optButtons = {}
 
@@ -838,7 +833,7 @@ function lib.new(config)
 
                 closeMenu = function()
                     isOpen = false
-                    dropdown_backdrop.Visible = false
+                    setCardInteractable(true)
                     _activeDropdownClose = nil
                     animateOptions(false)
                     local menuStroke = menu:FindFirstChildOfClass("UIStroke")
@@ -873,7 +868,7 @@ function lib.new(config)
                     end
                     isOpen = not isOpen
                     if isOpen then
-                        dropdown_backdrop.Visible = true
+                        setCardInteractable(false)
                         _activeDropdownClose = closeMenu
                         menu.Visible = true
                         menu.BackgroundTransparency = 0
@@ -1288,9 +1283,15 @@ function lib.new(config)
                 menu.AutomaticSize = Enum.AutomaticSize.None
                 menu.Size = UDim2.new(menuWidth.Scale, menuWidth.Offset, 0, 0)
                 menu.ClipsDescendants = true
-                menu.Active = true
-                menu.InputSink = Enum.InputSink.All
                 menu.Parent = row
+
+                local function setCardInteractable(enabled)
+                    for _, sibling in ipairs(card:GetChildren()) do
+                        if sibling:IsA("GuiObject") and sibling ~= row then
+                            sibling.Interactable = enabled
+                        end
+                    end
+                end
 
                 local optButtons = {}
 
@@ -1348,7 +1349,7 @@ function lib.new(config)
 
                 local function closeMenu()
                     isOpen = false
-                    dropdown_backdrop.Visible = false
+                    setCardInteractable(true)
                     _activeDropdownClose = nil
                     local menuStroke = menu:FindFirstChildOfClass("UIStroke")
                     TweenService:Create(menu, TweenInfo.new(0.2, Enum.EasingStyle.Quint), { BackgroundTransparency = 1 }):Play()
@@ -1369,7 +1370,7 @@ function lib.new(config)
                     end
                     isOpen = not isOpen
                     if isOpen then
-                        dropdown_backdrop.Visible = true
+                        setCardInteractable(false)
                         _activeDropdownClose = closeMenu
                         menu.Visible = true
                         menu.BackgroundTransparency = 0
