@@ -2086,6 +2086,11 @@ function lib.new(config)
             local searchSlideTi = TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
             search_open_frame.Visible = false
             search_open_frame.ClipsDescendants = true
+            local searchBarBg = search_open_frame.BackgroundTransparency
+            local searchBarStroke = search_open_frame:FindFirstChildOfClass("UIStroke")
+            local searchBarStrokeT = searchBarStroke and searchBarStroke.Transparency or 1
+            local searchBarIcon = search_open_frame:FindFirstChild("icon")
+            local searchBarClose = search_open_frame:FindFirstChild("close")
 
             local function showAllColumns()
                 for _, t in ipairs(tabs) do
@@ -2111,11 +2116,20 @@ function lib.new(config)
             end
 
             search_closed_btn.MouseButton1Click:Connect(function()
-                -- icon slides left, bar reveals behind it, icon fades into bar's icon
+                -- icon slides left, bar fades in behind it
                 search_open_frame.Size = UDim2.new(0, 0, 0, search_open_frame.Size.Y.Offset)
+                search_open_frame.BackgroundTransparency = 1
+                if searchBarStroke then searchBarStroke.Transparency = 1 end
+                if searchBarIcon then searchBarIcon.ImageTransparency = 1 end
+                if searchBarClose then searchBarClose.TextTransparency = 1 end
+                if searchInput then searchInput.TextTransparency = 1 end
                 search_open_frame.Visible = true
                 TweenService:Create(search_closed_btn, searchSlideTi, { Position = searchSlidePos }):Play()
-                TweenService:Create(search_open_frame, searchSlideTi, { Size = UDim2.new(0, searchBarWidth, 0, search_open_frame.Size.Y.Offset) }):Play()
+                TweenService:Create(search_open_frame, searchSlideTi, { Size = UDim2.new(0, searchBarWidth, 0, search_open_frame.Size.Y.Offset), BackgroundTransparency = searchBarBg }):Play()
+                if searchBarStroke then TweenService:Create(searchBarStroke, searchSlideTi, { Transparency = searchBarStrokeT }):Play() end
+                if searchBarIcon then TweenService:Create(searchBarIcon, searchSlideTi, { ImageTransparency = 0 }):Play() end
+                if searchBarClose then TweenService:Create(searchBarClose, searchSlideTi, { TextTransparency = 0 }):Play() end
+                if searchInput then TweenService:Create(searchInput, searchSlideTi, { TextTransparency = 0 }):Play() end
                 local btnIcon = search_closed_btn:FindFirstChild("icon")
                 if btnIcon then TweenService:Create(btnIcon, searchSlideTi, { ImageTransparency = 1 }):Play() end
                 if searchInput then searchInput:CaptureFocus() end
@@ -2123,13 +2137,18 @@ function lib.new(config)
 
             if searchClose then
                 searchClose.MouseButton1Click:Connect(function()
-                    -- slide icon back, collapse bar
+                    -- slide icon back, bar fades out
                     local tween = TweenService:Create(search_closed_btn, searchSlideTi, { Position = searchBtnPos })
-                    TweenService:Create(search_open_frame, searchSlideTi, { Size = UDim2.new(0, 0, 0, search_open_frame.Size.Y.Offset) }):Play()
+                    TweenService:Create(search_open_frame, searchSlideTi, { Size = UDim2.new(0, 0, 0, search_open_frame.Size.Y.Offset), BackgroundTransparency = 1 }):Play()
+                    if searchBarStroke then TweenService:Create(searchBarStroke, searchSlideTi, { Transparency = 1 }):Play() end
+                    if searchBarIcon then TweenService:Create(searchBarIcon, searchSlideTi, { ImageTransparency = 1 }):Play() end
+                    if searchBarClose then TweenService:Create(searchBarClose, searchSlideTi, { TextTransparency = 1 }):Play() end
+                    if searchInput then TweenService:Create(searchInput, searchSlideTi, { TextTransparency = 1 }):Play() end
                     local btnIcon = search_closed_btn:FindFirstChild("icon")
                     if btnIcon then TweenService:Create(btnIcon, searchSlideTi, { ImageTransparency = 0 }):Play() end
                     tween.Completed:Connect(function()
                         search_open_frame.Visible = false
+                        search_open_frame.BackgroundTransparency = searchBarBg
                     end)
                     tween:Play()
                     if searchInput then searchInput.Text = "" end
