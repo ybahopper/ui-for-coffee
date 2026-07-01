@@ -470,6 +470,19 @@ function lib.new(config)
             local elementCount = 0
             local cardObj = {}
 
+            local function ensureSep(row)
+                if not row:FindFirstChild("sep") then
+                    local sep = Instance.new("Frame")
+                    sep.Name = "sep"
+                    sep.Size = UDim2.new(1, 0, 0, 1)
+                    sep.Position = UDim2.new(0, 0, 1, -1)
+                    sep.BackgroundColor3 = Color3.new(1, 1, 1)
+                    sep.BackgroundTransparency = 0.95
+                    sep.BorderSizePixel = 0
+                    sep.Parent = row
+                end
+            end
+
             local function updateSeparators()
                 local rows = {}
                 for _, child in ipairs(card:GetChildren()) do
@@ -1640,6 +1653,7 @@ function lib.new(config)
                 elementCount = elementCount + 1
                 row.LayoutOrder = elementCount
                 row.Visible = true
+                ensureSep(row)
 
                 local header = row:FindFirstChild("header")
                 local colNames = { "col_1", "col_2", "col_3" }
@@ -1713,6 +1727,7 @@ function lib.new(config)
                 elementCount = elementCount + 1
                 row.LayoutOrder = elementCount
                 row.Visible = true
+                ensureSep(row)
 
                 local statFrames = {}
                 local colWidth = 1 / math.max(#stats, 1)
@@ -1776,6 +1791,7 @@ function lib.new(config)
                 elementCount = elementCount + 1
                 row.LayoutOrder = elementCount
                 row.Visible = true
+                ensureSep(row)
 
                 local eventHeight = 28
                 local totalHeight = math.max(#events * eventHeight, eventHeight)
