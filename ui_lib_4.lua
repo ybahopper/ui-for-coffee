@@ -224,8 +224,10 @@ function lib.new(config)
 
     local activeColor = Color3.fromRGB(210, 165, 130)
     local inactiveColor = Color3.fromRGB(152, 140, 125)
+    local hoverColor = Color3.fromRGB(180, 155, 130)
     local activeIconColor = Color3.fromRGB(194, 137, 92)
     local inactiveIconColor = Color3.fromRGB(152, 140, 125)
+    local hoverIconColor = Color3.fromRGB(170, 140, 110)
 
     local tabSwitching = false
 
@@ -556,6 +558,14 @@ function lib.new(config)
                 end
 
                 applyStyle(state, false)
+                -- hover on knob: won't fight toggle bg state
+                toggle.MouseEnter:Connect(function()
+                    TweenService:Create(knob, TWEEN_INFO, { BackgroundTransparency = math.max(knob.BackgroundTransparency - 0.15, 0) }):Play()
+                end)
+                toggle.MouseLeave:Connect(function()
+                    local target = state and TOGGLE_ON.knobTransparency or TOGGLE_OFF.knobTransparency
+                    TweenService:Create(knob, TWEEN_INFO, { BackgroundTransparency = target }):Play()
+                end)
                 row.Parent = card
                 updateSeparators()
 
@@ -1949,6 +1959,18 @@ function lib.new(config)
             setActiveTab(tab, true)
         end
 
+        btn.MouseEnter:Connect(function()
+            if tab ~= activeTab then
+                TweenService:Create(btn.label, TWEEN_INFO, { TextColor3 = hoverColor }):Play()
+                TweenService:Create(btn.icon, TWEEN_INFO, { ImageColor3 = hoverIconColor }):Play()
+            end
+        end)
+        btn.MouseLeave:Connect(function()
+            if tab ~= activeTab then
+                TweenService:Create(btn.label, TWEEN_INFO, { TextColor3 = inactiveColor }):Play()
+                TweenService:Create(btn.icon, TWEEN_INFO, { ImageColor3 = inactiveIconColor }):Play()
+            end
+        end)
         btn.MouseButton1Click:Connect(function()
             setActiveTab(tab)
         end)
