@@ -111,13 +111,15 @@ local TextService = cloneref(game:GetService("TextService"))
 local Players = cloneref(game:GetService("Players"))
 local Heartbeat = cloneref(game:GetService("RunService")).Heartbeat
 local TWEEN_INFO = TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
--- ponytail: one helper for row hover, 0.92 bg tween
-local function hoverify(row)
-    row.MouseEnter:Connect(function()
-        TweenService:Create(row, TWEEN_INFO, { BackgroundTransparency = 0.92 }):Play()
+-- ponytail: hover helper, dims bg slightly from resting state
+local function hoverify(el)
+    local rest = el.BackgroundTransparency
+    local hover = math.max(rest - 0.08, 0)
+    el.MouseEnter:Connect(function()
+        TweenService:Create(el, TWEEN_INFO, { BackgroundTransparency = hover }):Play()
     end)
-    row.MouseLeave:Connect(function()
-        TweenService:Create(row, TWEEN_INFO, { BackgroundTransparency = 1 }):Play()
+    el.MouseLeave:Connect(function()
+        TweenService:Create(el, TWEEN_INFO, { BackgroundTransparency = rest }):Play()
     end)
 end
 local TOGGLE_ON = {
@@ -554,7 +556,7 @@ function lib.new(config)
                 end
 
                 applyStyle(state, false)
-                hoverify(row)
+                hoverify(toggle)
                 row.Parent = card
                 updateSeparators()
 
@@ -631,7 +633,7 @@ function lib.new(config)
 
                 value = snapToStep(value)
                 updateVisual(value)
-                hoverify(row)
+                hoverify(track)
                 row.Parent = card
                 updateSeparators()
 
@@ -915,7 +917,7 @@ function lib.new(config)
                     end
                 end)
 
-                hoverify(row)
+                hoverify(btn)
                 row.Parent = card
                 updateSeparators()
 
@@ -979,7 +981,7 @@ function lib.new(config)
 
                 local btn = row.button
                 btn.Text = key.Name
-                hoverify(row)
+                hoverify(btn)
                 row.Parent = card
                 updateSeparators()
 
@@ -1098,7 +1100,7 @@ function lib.new(config)
                 elementCount = elementCount + 1
                 row.LayoutOrder = elementCount
                 row.Visible = true
-                hoverify(row)
+                hoverify(textbox)
                 row.Parent = card
                 updateSeparators()
 
@@ -1265,7 +1267,7 @@ function lib.new(config)
                     end
                 end)
 
-                hoverify(row)
+                hoverify(swatch)
                 row.Parent = card
                 updateSeparators()
                 updateVisual()
@@ -1423,7 +1425,7 @@ function lib.new(config)
                     end
                 end)
 
-                hoverify(row)
+                hoverify(btn)
                 row.Parent = card
                 updateSeparators()
 
@@ -1561,7 +1563,7 @@ function lib.new(config)
                     }):Play()
                 end)
 
-                hoverify(row)
+                hoverify(header)
                 row.Parent = card
                 updateSeparators()
 
