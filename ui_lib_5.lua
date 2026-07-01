@@ -2111,11 +2111,13 @@ function lib.new(config)
             end
 
             search_closed_btn.MouseButton1Click:Connect(function()
-                -- icon slides left, bar reveals behind it
+                -- icon slides left, bar reveals behind it, icon fades into bar's icon
                 search_open_frame.Size = UDim2.new(0, 0, 0, search_open_frame.Size.Y.Offset)
                 search_open_frame.Visible = true
                 TweenService:Create(search_closed_btn, searchSlideTi, { Position = searchSlidePos }):Play()
                 TweenService:Create(search_open_frame, searchSlideTi, { Size = UDim2.new(0, searchBarWidth, 0, search_open_frame.Size.Y.Offset) }):Play()
+                local btnIcon = search_closed_btn:FindFirstChild("icon")
+                if btnIcon then TweenService:Create(btnIcon, searchSlideTi, { ImageTransparency = 1 }):Play() end
                 if searchInput then searchInput:CaptureFocus() end
             end)
 
@@ -2124,6 +2126,8 @@ function lib.new(config)
                     -- slide icon back, collapse bar
                     local tween = TweenService:Create(search_closed_btn, searchSlideTi, { Position = searchBtnPos })
                     TweenService:Create(search_open_frame, searchSlideTi, { Size = UDim2.new(0, 0, 0, search_open_frame.Size.Y.Offset) }):Play()
+                    local btnIcon = search_closed_btn:FindFirstChild("icon")
+                    if btnIcon then TweenService:Create(btnIcon, searchSlideTi, { ImageTransparency = 0 }):Play() end
                     tween.Completed:Connect(function()
                         search_open_frame.Visible = false
                     end)
