@@ -2134,6 +2134,7 @@ function lib.new(config)
     local modalTi = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
     local modalSnap = {}
     local backdropTarget = modal_backdrop.BackgroundTransparency
+    local modalFrameBg = modal_frame.BackgroundTransparency
     for _, d in ipairs(modal_frame:GetDescendants()) do
         local props = {}
         if d:IsA("GuiObject") then props.BackgroundTransparency = d.BackgroundTransparency end
@@ -2167,12 +2168,14 @@ function lib.new(config)
             if props.Transparency then d.Transparency = 1 end
         end
         modal_backdrop.BackgroundTransparency = 1
+        modal_frame.BackgroundTransparency = 1
 
         modal_frame.Visible = true
         modal_backdrop.Visible = true
 
         -- animate in
         TweenService:Create(modal_backdrop, modalTi, { BackgroundTransparency = backdropTarget }):Play()
+        TweenService:Create(modal_frame, modalTi, { BackgroundTransparency = modalFrameBg }):Play()
         for d, props in pairs(modalSnap) do
             TweenService:Create(d, modalTi, props):Play()
         end
@@ -2185,6 +2188,7 @@ function lib.new(config)
             closing = true
             -- animate out
             TweenService:Create(modal_backdrop, modalTi, { BackgroundTransparency = 1 }):Play()
+            TweenService:Create(modal_frame, modalTi, { BackgroundTransparency = 1 }):Play()
             for d, props in pairs(modalSnap) do
                 local out = {}
                 if props.BackgroundTransparency then out.BackgroundTransparency = 1 end
