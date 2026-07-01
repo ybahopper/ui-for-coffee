@@ -2080,11 +2080,11 @@ function lib.new(config)
         if search_closed_btn and search_open_frame then
             local searchInput = search_open_frame:FindFirstChild("input")
             local searchClose = search_open_frame:FindFirstChild("close")
-            local searchOpenSize = search_open_frame.Size
-            local searchTween = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+            local searchOpenPos = search_open_frame.Position
+            local searchOffsetPos = UDim2.new(searchOpenPos.X.Scale, searchOpenPos.X.Offset + 8, searchOpenPos.Y.Scale, searchOpenPos.Y.Offset)
+            local searchTween = TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 
             search_open_frame.Visible = false
-            search_open_frame.ClipsDescendants = true
 
             local function showAllColumns()
                 for _, t in ipairs(tabs) do
@@ -2111,17 +2111,20 @@ function lib.new(config)
 
             search_closed_btn.MouseButton1Click:Connect(function()
                 search_closed_btn.Visible = false
-                search_open_frame.Size = UDim2.new(0, 0, searchOpenSize.Y.Scale, searchOpenSize.Y.Offset)
+                -- ponytail: fade+slide in from right, no width stretch
+                search_open_frame.Position = searchOffsetPos
+                search_open_frame.BackgroundTransparency = 1
                 search_open_frame.Visible = true
-                TweenService:Create(search_open_frame, searchTween, { Size = searchOpenSize }):Play()
+                TweenService:Create(search_open_frame, searchTween, { Position = searchOpenPos, BackgroundTransparency = 0 }):Play()
                 if searchInput then searchInput:CaptureFocus() end
             end)
 
             if searchClose then
                 searchClose.MouseButton1Click:Connect(function()
-                    local tween = TweenService:Create(search_open_frame, searchTween, { Size = UDim2.new(0, 0, searchOpenSize.Y.Scale, searchOpenSize.Y.Offset) })
+                    local tween = TweenService:Create(search_open_frame, searchTween, { Position = searchOffsetPos, BackgroundTransparency = 1 })
                     tween.Completed:Connect(function()
                         search_open_frame.Visible = false
+                        search_open_frame.BackgroundTransparency = 0
                         search_closed_btn.Visible = true
                     end)
                     tween:Play()
