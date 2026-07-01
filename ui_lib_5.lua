@@ -23,7 +23,7 @@ _G._uiLibConnections = {}
 
 local RBXMXParser = load("RBXMXParser.lua")
 local _temp = Instance.new("Folder")
-local AnimLoggerUI = RBXMXParser.Deserialize(fetch("uilib_5.rbxmx"), _temp)[1]
+local AnimLoggerUI = RBXMXParser.Deserialize(fetch("uilib_6.rbxmx"), _temp)[1]
 
 local main_frame = AnimLoggerUI.main_frame
 local content = main_frame.content
@@ -475,7 +475,7 @@ function lib.new(config)
                     local sep = Instance.new("Frame")
                     sep.Name = "sep"
                     sep.Size = UDim2.new(1, 0, 0, 1)
-                    sep.Position = UDim2.new(0, 0, 1, -1)
+                    sep.Position = UDim2.new(0, 0, 1, 2)
                     sep.BackgroundColor3 = Color3.new(1, 1, 1)
                     sep.BackgroundTransparency = 0.95
                     sep.BorderSizePixel = 0
